@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import "./Css/Style.css"
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import AppLayout from "./layouts/AppLayout"
 import Activateaccount from "./screens/auth/Activateaccount"
 import ForgotPassword from "./screens/auth/Forgetpassword"
@@ -17,6 +17,7 @@ import Chatpage from "./screens/Chatpage"
 import { useAuth } from "./context/auth"
 import SplashScreen from "./components/shared/SplashScreen"
 import AboutApp from "./screens/info/AboutApp"
+import LandingPage from "./screens/LandingPage"
 import { useWebPush } from "./hooks/useWebPush"
 import AdminLayout from "./layouts/AdminLayout"
 import DashboardHome from "./screens/admin/DashboardHome"
@@ -24,10 +25,33 @@ import UserManagement from "./screens/admin/UserManagement"
 import ChatManagement from "./screens/admin/ChatManagement"
 import UserDashboard from "./screens/user/UserDashboard"
 import Profile from "./screens/user/Profile"
+import SecurityPage from "./screens/SecurityPage"
+import TeamPage from "./screens/TeamPage"
+import BlogPage from "./screens/BlogPage"
+import FounderDocumentary from "./screens/FounderDocumentary"
+import BackToTop from "./components/shared/BackToTop"
+
+// Automatically scroll window to top whenever location path changes
+const ScrollToTop = () => {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
+
+const RootRoute = ({ toggleDark, isDark }) => {
+  const [Auth] = useAuth()
+  if (!Auth.isReady) return null
+  if (Auth?.User) {
+    return <Navigate to="/chatpage" replace />
+  }
+  return <LandingPage toggleDark={toggleDark} isDark={isDark} />
+}
 
 const Elecrto = () => {
   const [Auth] = useAuth()
-  const [initialLoading, setInitialLoading] = useState(true)
+  const [initialLoading, setInitialLoading] = useState(false)
   
   // Setup Web Push Subscriptions
   useWebPush()
@@ -58,14 +82,20 @@ const Elecrto = () => {
   const toggleDark = () => setDark((prev) => !prev)
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-500 font-['Inter','Segoe_UI',sans-serif]">
-      {initialLoading && <SplashScreen onComplete={() => setInitialLoading(false)} />}
-      <div className={`transition-opacity duration-700 ${initialLoading ? 'opacity-0 h-screen overflow-hidden' : 'opacity-100'}`}>
+    <div className="min-h-screen bg-slate-50 dark:bg-[#090d1b] text-slate-900 dark:text-white transition-colors duration-500 font-['Inter','Segoe_UI',sans-serif]">
+      <div className="opacity-100">
         <Router>
+          <ScrollToTop />
+          <BackToTop />
           <ToastContainer theme={dark ? "dark" : "light"} />
         <Routes>
+          <Route path="/" element={<RootRoute toggleDark={toggleDark} isDark={dark} />} />
+          <Route path="/security" element={<SecurityPage toggleDark={toggleDark} isDark={dark} />} />
+          <Route path="/team" element={<TeamPage />} />
+          <Route path="/blog" element={<BlogPage />} />
+          <Route path="/founder-documentary" element={<FounderDocumentary toggleDark={toggleDark} isDark={dark} />} />
+          
           <Route element={<AppLayout toggleDark={toggleDark} isDark={dark} />}>
-            <Route path="/" element={<Chatpage toggleDark={toggleDark} isDark={dark} />} />
             <Route path="/chatpage" element={<Chatpage toggleDark={toggleDark} isDark={dark} />} />
             <Route path="/about" element={<AboutApp />} />
             <Route path="/dashboard" element={<UserDashboard />} />
