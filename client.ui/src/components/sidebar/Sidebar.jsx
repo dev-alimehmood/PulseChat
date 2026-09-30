@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { MessageSquare, Sun, Moon, LogOut, Info, Shield, LayoutDashboard, Users, Settings } from "lucide-react";
 
 const NAV = [
-  { label: "Chats", path: "/", icon: MessageSquare },
+  { label: "Chats", path: "/chatpage", icon: MessageSquare },
   { label: "Settings", path: "/dashboard", icon: Settings },
   { label: "About", path: "/about", icon: Info },
 ];
@@ -22,7 +22,7 @@ const Sidebar = ({ activeTab, onSelectTab, toggleDark, isDark }) => {
   const user = Auth?.User;
   const [bg, fg] = avatarColor(user?._id || "");
 
-  const isActivePath = (path) => location.pathname === path || (path === "/" && location.pathname === "/chatpage");
+  const isActivePath = (path) => location.pathname === path || (path === "/chatpage" && location.pathname === "/");
 
   return (
     <aside className="flex w-16 md:w-20 shrink-0 flex-col border-r border-slate-200/80 bg-white/85 px-1 md:px-2 py-4 shadow-[12px_0_40px_rgba(15,23,42,0.06)] backdrop-blur-2xl transition-all duration-500 dark:border-slate-800/80 dark:bg-slate-900/85 z-50">

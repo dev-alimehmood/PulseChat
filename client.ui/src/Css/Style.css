@@ -59,6 +59,38 @@ button, input, textarea, select {
   }
 }
 
+/* Custom Brand Theme Variables matching requested Dark Theme */
+:root {
+  --bg-dark-main: #090d1b;
+  --bg-dark-card: #13192e;
+  --border-dark: #1e2942;
+  --color-periwinkle: #818cf8;
+  --color-cyan: #38bdf8;
+  --color-mint: #2dd4bf;
+  --color-emerald: #34d399;
+}
+
+.dark body, html.dark {
+  background-color: var(--bg-dark-main);
+  color: #f8fafc;
+}
+
+/* Custom Gradient Utilities */
+.bg-theme-gradient {
+  background: linear-gradient(135deg, #6366f1 0%, #38bdf8 50%, #2dd4bf 100%);
+}
+
+.text-theme-gradient {
+  background: linear-gradient(135deg, #818cf8 0%, #38bdf8 50%, #2dd4bf 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dark .theme-card {
+  background-color: var(--bg-dark-card);
+  border-color: var(--border-dark);
+}
+
 /* Custom Scrollbar styling */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
@@ -76,3 +108,102 @@ button, input, textarea, select {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   @apply bg-slate-400 dark:bg-slate-600;
 }
+
+/* Infinite Horizontal Marquee Animation */
+@keyframes marquee-infinite {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee-infinite 35s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Modern 3D Floating Animation */
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(1deg);
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 7s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-slow 9s ease-in-out infinite;
+  animation-delay: 3s;
+}
+
+/* Ambient Pulse Mesh Beams */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.08);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 10s ease-in-out infinite;
+}
+
+/* Animated Gradient Text Flow */
+@keyframes gradient-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-flow {
+  background-size: 200% 200%;
+  animation: gradient-flow 6s ease infinite;
+}
+
+/* Socket Signal Equalizer Waveform Animation */
+@keyframes bar-wave {
+  0%, 100% {
+    height: 6px;
+  }
+  50% {
+    height: 22px;
+  }
+}
+
+.animate-wave-1 {
+  animation: bar-wave 1.2s ease-in-out infinite;
+}
+.animate-wave-2 {
+  animation: bar-wave 1.2s ease-in-out infinite 0.2s;
+}
+.animate-wave-3 {
+  animation: bar-wave 1.2s ease-in-out infinite 0.4s;
+}
+.animate-wave-4 {
+  animation: bar-wave 1.2s ease-in-out infinite 0.6s;
+}
+.animate-wave-5 {
+  animation: bar-wave 1.2s ease-in-out infinite 0.8s;
+}
