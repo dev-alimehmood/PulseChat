@@ -1136,10 +1136,11 @@ const LandingPage = ({ toggleDark, isDark }) => {
       )}
 
       {/* Floating AI Launcher Badge Button (Bottom Right) */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
+        {/* Desktop Expanded Pill Button */}
         <button
           onClick={() => setIsFloatingChatOpen(!isFloatingChatOpen)}
-          className="group relative flex items-center gap-3 px-5 py-3.5 rounded-full bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-slate-950 font-black shadow-[0_0_35px_rgba(45,212,191,0.6)] hover:shadow-[0_0_50px_rgba(45,212,191,0.85)] hover:scale-105 transition-all duration-300 border border-white/40"
+          className="hidden sm:flex group relative items-center gap-3 px-5 py-3.5 rounded-full bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-slate-950 font-black shadow-[0_0_35px_rgba(45,212,191,0.6)] hover:shadow-[0_0_50px_rgba(45,212,191,0.85)] hover:scale-105 transition-all duration-300 border border-white/40 cursor-pointer"
         >
           <div className="relative flex items-center justify-center">
             <div className="w-8 h-8 rounded-xl bg-slate-950/20 flex items-center justify-center border border-slate-950/20 group-hover:scale-110 transition-transform">
@@ -1153,6 +1154,16 @@ const LandingPage = ({ toggleDark, isDark }) => {
           <span className="ml-1 px-2.5 py-0.5 rounded-full bg-slate-950 text-[#2dd4bf] text-[10px] font-mono font-extrabold shadow-sm">
             {isFloatingChatOpen ? "Close" : "PRO AI"}
           </span>
+        </button>
+
+        {/* Mobile Compact Circular Floating Button */}
+        <button
+          onClick={() => setIsFloatingChatOpen(!isFloatingChatOpen)}
+          className="sm:hidden w-12 h-12 rounded-full bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-slate-950 shadow-[0_0_25px_rgba(45,212,191,0.7)] active:scale-95 transition-all flex items-center justify-center border border-white/40 cursor-pointer relative"
+          aria-label="Open Pulse AI Assistant"
+        >
+          <Bot className="w-6 h-6 text-slate-950" />
+          <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#090d1b] animate-pulse" />
         </button>
       </div>
 

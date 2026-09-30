@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/shared/Navbar";
 import Footer from "../components/shared/Footer";
@@ -30,15 +30,47 @@ import {
   Terminal,
   Activity,
   Server,
-  Database
+  Database,
+  Maximize2,
+  Minimize2,
+  Tv,
+  ExternalLink,
+  RefreshCw
 } from "lucide-react";
 
 const FounderDocumentary = ({ toggleDark, isDark }) => {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [videoSourceType, setVideoSourceType] = useState("youtube"); // "youtube" | "mp4"
   const [activeVideoChapter, setActiveVideoChapter] = useState(0);
   const [playingAudioId, setPlayingAudioId] = useState(null);
   const [copiedEmail, setCopiedEmail] = useState(null);
   const [hoveredArchNode, setHoveredArchNode] = useState("gateway");
+
+  const inlineVideoRef = useRef(null);
+  const modalVideoRef = useRef(null);
+
+  // Close modal on ESC key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && isVideoModalOpen) {
+        setIsVideoModalOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isVideoModalOpen]);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isVideoModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isVideoModalOpen]);
 
   const handleCopyEmail = (email) => {
     navigator.clipboard.writeText(email);
@@ -47,10 +79,10 @@ const FounderDocumentary = ({ toggleDark, isDark }) => {
   };
 
   const videoChapters = [
-    { title: "01:15 — The Origin & Realtime Latency Crisis", time: "01:15", desc: "Ali explains why traditional polling chat apps buffer under load." },
-    { title: "03:40 — Building the Sub-50ms WebSocket Engine", time: "03:40", desc: "Deep dive into Node.js event dispatchers and React state hooks." },
-    { title: "07:10 — Zero-Trust Security & SHA-256 HMAC", time: "07:10", desc: "Muhammad Moeez breaks down session rotation and packet signatures." },
-    { title: "10:25 — Designing the Obsidian Glass System", time: "10:25", desc: "Crafting dark mode glassmorphism visual tokens." }
+    { title: "01:15 — Origin & Realtime Latency Crisis", time: "01:15", ytSec: 75, desc: "Ali explains why traditional polling chat apps buffer under load." },
+    { title: "03:40 — Sub-50ms WebSocket Engine", time: "03:40", ytSec: 220, desc: "Deep dive into Node.js event dispatchers and React state hooks." },
+    { title: "07:10 — Zero-Trust SHA-256 HMAC Guard", time: "07:10", ytSec: 430, desc: "Muhammad Moeez breaks down session rotation and packet signatures." },
+    { title: "10:25 — Obsidian Glass UI Design System", time: "10:25", ytSec: 625, desc: "Crafting dark mode glassmorphism visual tokens." }
   ];
 
   const archNodes = {
@@ -92,6 +124,10 @@ const FounderDocumentary = ({ toggleDark, isDark }) => {
     setPlayingAudioId(playingAudioId === id ? null : id);
   };
 
+  // YouTube embed video link (React Tech Documentary stream)
+  const currentYtSec = videoChapters[activeVideoChapter]?.ytSec || 0;
+  const youtubeEmbedUrl = `https://www.youtube-nocookie.com/embed/2-24SbaK7wU?autoplay=${isVideoModalOpen ? 1 : 0}&start=${currentYtSec}&rel=0&modestbranding=1`;
+
   return (
     <div className="min-h-screen bg-[#080b14] text-slate-100 font-sans relative overflow-x-hidden selection:bg-teal-500/30">
       
@@ -109,69 +145,138 @@ const FounderDocumentary = ({ toggleDark, isDark }) => {
       {/* Main Container */}
       <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-24 sm:pt-36 sm:pb-32 space-y-16 sm:space-y-24">
         
-        {/* Editorial Hero Header */}
+        {/* Editorial Hero Header with Text Load Animations */}
         <div className="text-center space-y-6 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-400 text-xs font-mono tracking-widest uppercase backdrop-blur-md">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-400 text-xs font-mono tracking-widest uppercase backdrop-blur-md animate-fade-in-down">
             <Film className="w-3.5 h-3.5 text-teal-400" />
             The Official Technical Documentary
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-[1.12]">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-white leading-[1.15] animate-fade-in-up delay-100">
             The Complete Story of <br />
-            <span className="bg-gradient-to-r from-indigo-400 via-cyan-300 to-teal-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-indigo-400 via-cyan-300 to-teal-400 bg-clip-text text-transparent animate-text-shimmer">
               PulseChat Infrastructure.
             </span>
           </h1>
 
-          <p className="text-slate-300 text-base sm:text-lg leading-relaxed font-normal">
-            An in-depth, seamless documentary covering the vision, sub-50ms concurrency engineering, zero-trust security architecture, and founder journey of **Ali** and **Muhammad Moeez**.
+          <p className="text-slate-300 text-sm sm:text-base md:text-lg leading-relaxed font-normal animate-fade-in-up delay-200 max-w-2xl mx-auto px-2">
+            An in-depth, seamless documentary covering the vision, sub-50ms concurrency engineering, zero-trust security architecture, and founder journey of <strong className="text-white">Ali</strong> and <strong className="text-white">Muhammad Moeez</strong>.
           </p>
         </div>
 
-        {/* ELEGANT WIDESCREEN CINEMATIC VIDEO PREVIEW CARD */}
-        <div className="relative rounded-3xl overflow-hidden border border-white/15 bg-[#0d1222] shadow-2xl group">
-          <div className="aspect-[16/9] relative flex items-center justify-center overflow-hidden">
-            <img
-              src="/images/ali_founder.jpg"
-              alt="Documentary Preview"
-              className="w-full h-full object-cover brightness-75 group-hover:scale-105 transition-transform duration-700"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0d1222] via-[#0d1222]/40 to-transparent" />
-
-            {/* Play Button */}
-            <button
-              onClick={() => setIsVideoModalOpen(true)}
-              className="relative z-10 w-20 h-20 rounded-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-teal-400 text-slate-950 flex items-center justify-center shadow-[0_0_40px_rgba(45,212,191,0.5)] hover:scale-110 transition-transform cursor-pointer group/play"
-              title="Watch documentary film"
-            >
-              <Play className="w-8 h-8 fill-slate-950 ml-1 group-hover/play:scale-110 transition-transform" />
-            </button>
-
-            {/* Video Duration Badge */}
-            <div className="absolute top-4 left-4 flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-black/60 border border-white/15 text-slate-200 text-xs font-mono font-semibold backdrop-blur-md flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-teal-400" />
-                12 MIN DOCUMENTARY FILM
+        {/* HIGH-DEFINITION REAL PLAYABLE VIDEO DOCUMENTARY CARD */}
+        <div className="rounded-2xl sm:rounded-3xl overflow-hidden border border-white/15 bg-[#0d1222] shadow-2xl space-y-0 group animate-scale-in delay-300">
+          
+          {/* Header Bar above Video with Source Switch & Expand Button */}
+          <div className="p-3 sm:p-4 bg-[#080b14] border-b border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 font-bold w-full sm:w-auto justify-between sm:justify-start">
+              <span className="flex items-center gap-2">
+                <Film className="w-4 h-4 text-teal-400" />
+                <span>TECHNICAL KEYNOTE DOCUMENTARY</span>
               </span>
+              <span className="sm:hidden px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 text-[10px]">HD STREAM</span>
             </div>
 
-            {/* Bottom Caption Overlay */}
-            <div className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-[#080b14]/90 border border-white/10 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="space-y-0.5 text-center sm:text-left">
-                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+            <div className="flex items-center justify-between w-full sm:w-auto gap-2">
+              {/* Source Switch Buttons */}
+              <div className="flex items-center bg-white/5 rounded-xl p-0.5 border border-white/10 shrink-0">
+                <button
+                  onClick={() => setVideoSourceType("youtube")}
+                  className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-mono font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    videoSourceType === "youtube"
+                      ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <Tv className="w-3.5 h-3.5" />
+                  <span className="hidden xs:inline">YouTube</span> Stream
+                </button>
+                <button
+                  onClick={() => setVideoSourceType("mp4")}
+                  className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-mono font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    videoSourceType === "mp4"
+                      ? "bg-gradient-to-r from-indigo-500 to-teal-400 text-slate-950 shadow"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <Film className="w-3.5 h-3.5" />
+                  <span className="hidden xs:inline">MP4</span> Stream
+                </button>
+              </div>
+
+              {/* Expand Fullscreen Button */}
+              <button
+                onClick={() => setIsVideoModalOpen(true)}
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-teal-400 text-slate-950 font-bold text-xs shadow hover:scale-105 transition-transform flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <span>Expand</span> <Maximize2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Player Container */}
+          <div className="aspect-[16/9] relative bg-black">
+            {videoSourceType === "youtube" ? (
+              <iframe
+                src={youtubeEmbedUrl}
+                title="PulseChat Realtime Engineering Documentary"
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <video
+                ref={inlineVideoRef}
+                controls
+                playsInline
+                poster="/images/ali_founder.jpg"
+                className="w-full h-full object-cover"
+              >
+                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4" type="video/mp4" />
+                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+                Your browser does not support HTML5 video streaming.
+              </video>
+            )}
+          </div>
+
+          {/* Footer Caption & Chapter Selection */}
+          <div className="p-4 bg-[#0d1222] border-t border-white/10 space-y-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <h3 className="text-base font-bold text-white tracking-tight">
                   PulseChat: Engineering Sub-50ms Realtime Speed
                 </h3>
                 <p className="text-xs text-slate-300">
                   Featuring Ali (Principal Systems Architect) and Muhammad Moeez (Chief Security Officer).
                 </p>
               </div>
+              <span className="px-3 py-1 rounded-full bg-black/60 border border-white/15 text-teal-400 text-xs font-mono font-semibold shrink-0">
+                12 MIN HD STREAM
+              </span>
+            </div>
 
-              <button
-                onClick={() => setIsVideoModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-teal-400 text-slate-950 font-bold text-xs shadow-md hover:scale-105 transition-transform shrink-0 flex items-center gap-1.5"
-              >
-                Watch Film <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+            {/* Chapters */}
+            <div className="pt-2 border-t border-white/10 flex items-center gap-2 overflow-x-auto pb-1">
+              <span className="text-[11px] font-mono text-slate-400 uppercase shrink-0 font-bold">Chapters:</span>
+              {videoChapters.map((ch, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setActiveVideoChapter(idx);
+                    if (videoSourceType === "mp4" && inlineVideoRef.current) {
+                      inlineVideoRef.current.currentTime = ch.ytSec;
+                      inlineVideoRef.current.play();
+                    }
+                  }}
+                  className={`px-3 py-1 rounded-xl border text-xs font-mono transition-all whitespace-nowrap cursor-pointer ${
+                    activeVideoChapter === idx
+                      ? "bg-teal-500/20 border-teal-400 text-teal-300 font-bold"
+                      : "bg-white/5 border-white/10 text-slate-300 hover:text-white"
+                  }`}
+                >
+                  {ch.time} — {ch.title.split("—")[1] || ch.title}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -222,7 +327,7 @@ const FounderDocumentary = ({ toggleDark, isDark }) => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <button
                 onMouseEnter={() => setHoveredArchNode("client")}
-                className={`p-6 rounded-3xl border transition-all text-left space-y-3 ${
+                className={`p-6 rounded-3xl border transition-all text-left space-y-3 cursor-pointer ${
                   hoveredArchNode === "client"
                     ? "border-cyan-400 bg-cyan-500/10 shadow-[0_0_30px_rgba(56,189,248,0.2)] scale-105"
                     : "border-white/10 bg-[#0d1222]/80 hover:border-white/20"
@@ -237,7 +342,7 @@ const FounderDocumentary = ({ toggleDark, isDark }) => {
 
               <button
                 onMouseEnter={() => setHoveredArchNode("gateway")}
-                className={`p-6 rounded-3xl border transition-all text-left space-y-3 ${
+                className={`p-6 rounded-3xl border transition-all text-left space-y-3 cursor-pointer ${
                   hoveredArchNode === "gateway"
                     ? "border-teal-400 bg-teal-500/10 shadow-[0_0_30px_rgba(45,212,191,0.2)] scale-105"
                     : "border-white/10 bg-[#0d1222]/80 hover:border-white/20"
@@ -252,7 +357,7 @@ const FounderDocumentary = ({ toggleDark, isDark }) => {
 
               <button
                 onMouseEnter={() => setHoveredArchNode("security")}
-                className={`p-6 rounded-3xl border transition-all text-left space-y-3 ${
+                className={`p-6 rounded-3xl border transition-all text-left space-y-3 cursor-pointer ${
                   hoveredArchNode === "security"
                     ? "border-indigo-400 bg-indigo-500/10 shadow-[0_0_30px_rgba(99,102,241,0.2)] scale-105"
                     : "border-white/10 bg-[#0d1222]/80 hover:border-white/20"
@@ -267,7 +372,7 @@ const FounderDocumentary = ({ toggleDark, isDark }) => {
 
               <button
                 onMouseEnter={() => setHoveredArchNode("database")}
-                className={`p-6 rounded-3xl border transition-all text-left space-y-3 ${
+                className={`p-6 rounded-3xl border transition-all text-left space-y-3 cursor-pointer ${
                   hoveredArchNode === "database"
                     ? "border-purple-400 bg-purple-500/10 shadow-[0_0_30px_rgba(192,132,252,0.2)] scale-105"
                     : "border-white/10 bg-[#0d1222]/80 hover:border-white/20"
@@ -372,7 +477,7 @@ const FounderDocumentary = ({ toggleDark, isDark }) => {
                     <div className="flex items-center gap-2.5">
                       <button
                         onClick={() => toggleAudio("ali")}
-                        className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-teal-400 text-slate-950 flex items-center justify-center hover:scale-105 transition-transform"
+                        className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-teal-400 text-slate-950 flex items-center justify-center hover:scale-105 transition-transform cursor-pointer"
                       >
                         {playingAudioId === "ali" ? <Pause className="w-4 h-4 fill-slate-950" /> : <Play className="w-4 h-4 fill-slate-950 ml-0.5" />}
                       </button>
@@ -449,7 +554,7 @@ const FounderDocumentary = ({ toggleDark, isDark }) => {
                     <div className="flex items-center gap-2.5">
                       <button
                         onClick={() => toggleAudio("moeez")}
-                        className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-teal-400 text-slate-950 flex items-center justify-center hover:scale-105 transition-transform"
+                        className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-teal-400 text-slate-950 flex items-center justify-center hover:scale-105 transition-transform cursor-pointer"
                       >
                         {playingAudioId === "moeez" ? <Pause className="w-4 h-4 fill-slate-950" /> : <Play className="w-4 h-4 fill-slate-950 ml-0.5" />}
                       </button>
@@ -550,48 +655,80 @@ const FounderDocumentary = ({ toggleDark, isDark }) => {
 
       </main>
 
-      {/* FULLSCREEN DOCUMENTARY REAL VIDEO MODAL VIEWER */}
+      {/* FULLSCREEN DOCUMENTARY REAL VIDEO MODAL VIEWER WITH GUARANTEED CLOSE / DE-EXPAND CONTROLS */}
       {isVideoModalOpen && (
         <div
           onClick={() => setIsVideoModalOpen(false)}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-3xl animate-fadeIn"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 bg-black/95 backdrop-blur-3xl animate-fadeIn"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative max-w-5xl w-full bg-[#0d1222] border border-white/20 rounded-3xl overflow-hidden shadow-2xl flex flex-col"
+            className="relative max-w-5xl w-full bg-[#0d1222] border border-white/20 rounded-3xl overflow-hidden shadow-2xl flex flex-col z-10 max-h-[92vh]"
           >
-            <div className="p-4 bg-[#080b14] border-b border-white/10 flex items-center justify-between">
+            {/* Modal Header Bar with Explicit ESC Indicator & Close Button */}
+            <div className="p-4 bg-[#080b14] border-b border-white/10 flex items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 font-bold">
                 <Film className="w-4 h-4 text-teal-400" />
-                <span>PULSECHAT REALTIME INFRASTRUCTURE DOCUMENTARY FILM (HD STREAM)</span>
+                <span className="hidden sm:inline">PULSECHAT TECHNICAL DOCUMENTARY (FULLSCREEN)</span>
+                <span className="sm:hidden">DOCUMENTARY FILM</span>
               </div>
-              <button
-                onClick={() => setIsVideoModalOpen(false)}
-                className="p-2 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-all border border-white/10"
-              >
-                <X className="w-5 h-5" />
-              </button>
+
+              <div className="flex items-center gap-3">
+                <span className="hidden md:inline-block text-[11px] font-mono text-slate-400 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">
+                  Press ESC to Exit
+                </span>
+                <button
+                  onClick={() => setIsVideoModalOpen(false)}
+                  className="px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold transition-all border border-red-400/30 flex items-center gap-1.5 text-xs cursor-pointer shadow-lg"
+                  title="Close Fullscreen Video Modal (ESC)"
+                >
+                  <X className="w-4 h-4" />
+                  <span>Close Fullscreen</span>
+                </button>
+              </div>
             </div>
 
-            {/* REAL HTML5 VIDEO STREAM PLAYER */}
-            <div className="aspect-[16/9] bg-black flex items-center justify-center relative overflow-hidden">
-              <video
-                controls
-                autoPlay
-                className="w-full h-full object-cover"
-                src="https://assets.mixkit.co/videos/preview/mixkit-code-running-on-a-computer-screen-41554-large.mp4"
-                poster="/images/ali_founder.jpg"
-              />
+            {/* Video Container inside Modal */}
+            <div className="aspect-[16/9] bg-black flex items-center justify-center relative overflow-hidden shrink-0">
+              {videoSourceType === "youtube" ? (
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/2-24SbaK7wU?autoplay=1&start=${currentYtSec}&rel=0&modestbranding=1`}
+                  title="PulseChat Engineering Documentary Fullscreen"
+                  className="w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <video
+                  ref={modalVideoRef}
+                  controls
+                  autoPlay
+                  playsInline
+                  poster="/images/ali_founder.jpg"
+                  className="w-full h-full object-cover"
+                >
+                  <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4" type="video/mp4" />
+                  <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+                  Your browser does not support HTML5 video playback.
+                </video>
+              )}
             </div>
 
-            {/* Video Chapters Selector */}
-            <div className="p-4 bg-[#080b14] border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono text-slate-300">
-              <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto">
+            {/* Video Chapters & Exit Footer in Modal */}
+            <div className="p-4 bg-[#080b14] border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono text-slate-300 shrink-0">
+              <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+                <span className="text-slate-400 font-bold shrink-0">Jump to Chapter:</span>
                 {videoChapters.map((ch, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setActiveVideoChapter(idx)}
-                    className={`px-3 py-1.5 rounded-xl border text-[11px] font-mono whitespace-nowrap transition-all ${
+                    onClick={() => {
+                      setActiveVideoChapter(idx);
+                      if (videoSourceType === "mp4" && modalVideoRef.current) {
+                        modalVideoRef.current.currentTime = ch.ytSec;
+                        modalVideoRef.current.play();
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-xl border text-[11px] font-mono whitespace-nowrap transition-all cursor-pointer ${
                       activeVideoChapter === idx
                         ? "bg-teal-400 text-slate-950 border-teal-400 font-bold"
                         : "bg-white/5 border-white/10 text-slate-300 hover:text-white"
@@ -602,11 +739,13 @@ const FounderDocumentary = ({ toggleDark, isDark }) => {
                 ))}
               </div>
 
+              {/* Explicit De-expand Button */}
               <button
                 onClick={() => setIsVideoModalOpen(false)}
-                className="px-4 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition-all shrink-0"
+                className="w-full sm:w-auto px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-white/20 text-white font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
               >
-                Close Video Player
+                <Minimize2 className="w-4 h-4 text-teal-400" />
+                <span>De-expand & Return to Page</span>
               </button>
             </div>
           </div>
@@ -620,3 +759,4 @@ const FounderDocumentary = ({ toggleDark, isDark }) => {
 };
 
 export default FounderDocumentary;
+
