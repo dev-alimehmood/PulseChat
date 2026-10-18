@@ -1,15 +1,16 @@
 import { useAuth } from "../../context/auth";
 import { getInitials, avatarColor, formatTime, truncate } from "../../utils/chat";
-import { Check, CheckCheck, AlertCircle, Star } from "lucide-react";
+import { Check, CheckCheck, AlertCircle, Star, Clock } from "lucide-react";
 
 const MessageStatusIcon = ({ status, isMyMessage }) => {
   if (!isMyMessage) return null;
-  if (status === "sending") return <Check className="w-3 h-3 text-slate-400 dark:text-slate-500" />;
-  if (status === "sent") return <Check className="w-3 h-3 text-slate-600 dark:text-slate-400" />;
-  if (status === "delivered") return <CheckCheck className="w-3 h-3 text-slate-600 dark:text-slate-400" />;
-  if (status === "seen") return <CheckCheck className="w-3 h-3 text-primary-500" />;
-  if (status === "failed") return <AlertCircle className="w-3 h-3 text-red-500" />;
-  return null;
+  const currentStatus = status || "sent";
+  if (currentStatus === "sending") return <Clock className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 animate-pulse flex-shrink-0" />;
+  if (currentStatus === "sent") return <Check className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 flex-shrink-0" />;
+  if (currentStatus === "delivered") return <CheckCheck className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 flex-shrink-0" />;
+  if (currentStatus === "seen") return <CheckCheck className="w-3.5 h-3.5 text-[#2dd4bf] dark:text-[#2dd4bf] flex-shrink-0" />;
+  if (currentStatus === "failed") return <AlertCircle className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />;
+  return <Check className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 flex-shrink-0" />;
 };
 
 const ChatItem = ({ conv, isActive, onClick }) => {
@@ -24,7 +25,7 @@ const ChatItem = ({ conv, isActive, onClick }) => {
   const preview = lastMessage?.isDeleted
     ? "This message was deleted"
     : lastMessage?.text
-    ? `${isMyMessage ? "You: " : ""}${truncate(lastMessage.text, 35)}`
+    ? `${isMyMessage ? "You: " : ""}${truncate(lastMessage.text, 32)}`
     : lastMessage?.image
     ? `${isMyMessage ? "You: " : ""}📷 Photo`
     : lastMessage?.audioUrl
@@ -37,40 +38,63 @@ const ChatItem = ({ conv, isActive, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className={`flex items-center gap-3 sm:gap-4 px-3 sm:px-6 py-3 sm:py-4 cursor-pointer border-b border-slate-100 dark:border-slate-800/50 transition-all duration-300 group ${
+      className={`flex items-center gap-3.5 px-3.5 sm:px-4 py-3 cursor-pointer border-b border-slate-100/90 dark:border-white/5 transition-all duration-200 group relative ${
         isActive 
-          ? "bg-primary-50 dark:bg-primary-500/10 border-l-4 border-l-primary-500 pl-[8px] sm:pl-[20px]" 
-          : "hover:bg-slate-50 dark:hover:bg-slate-800/50 border-l-4 border-l-transparent"
+          ? "bg-indigo-50/80 dark:bg-white/[0.05] border-l-4 border-l-[#4f46e5] dark:border-l-[#2dd4bf] pl-3 sm:pl-3.5" 
+          : "hover:bg-slate-50/90 dark:hover:bg-slate-800/40 border-l-4 border-l-transparent"
       }`}
     >
+      {/* Active Ambient Glow Indicator */}
+      {isActive && (
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-[#2dd4bf] shadow-[0_0_12px_#2dd4bf]" />
+      )}
+
       {/* Avatar */}
       <div
-        className={`relative w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 shadow-sm transition-transform duration-300 ${isActive ? 'scale-105 ring-2 ring-primary-500/50' : 'group-hover:scale-105'}`}
-        style={{ background: bg, color: fg }}
+        className={`relative w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-sm transition-all duration-300 overflow-hidden ${
+          isActive 
+            ? 'scale-105 ring-2 ring-[#2dd4bf]/70 shadow-[0_0_15px_rgba(45,212,191,0.35)]' 
+            : 'group-hover:scale-105 border border-white/10'
+        }`}
+        style={!(user?.profilepicture || user?.avatar) ? { background: bg, color: fg } : {}}
       >
-        {getInitials(user?.full_name || user?.name)}
+        {(user?.profilepicture || user?.avatar) ? (
+          <img 
+            src={user.profilepicture || user.avatar} 
+            alt={user?.full_name || user?.name || "Avatar"} 
+            className="w-full h-full object-cover" 
+          />
+        ) : (
+          getInitials(user?.full_name || user?.name)
+        )}
         {user?.isOnline && (
-          <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-white dark:border-slate-900" />
+          <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#2dd4bf] ring-2 ring-white dark:ring-[#090d1b] shadow-[0_0_8px_#2dd4bf] z-10" />
         )}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-center gap-2 mb-1">
-          <span className={`text-base font-medium flex-1 min-w-0 truncate ${isActive ? 'text-primary-700 dark:text-primary-400' : 'text-slate-800 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-white'}`}>
+          <span className={`text-sm font-semibold flex-1 min-w-0 truncate tracking-tight transition-colors ${
+            isActive 
+              ? 'text-slate-900 dark:text-white' 
+              : 'text-slate-800 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white'
+          }`}>
             {user?.full_name || user?.name || "Unknown"}
-            {isFavorite && <Star className="inline w-3 h-3 ml-1 text-yellow-400 fill-yellow-400 flex-shrink-0" />}
+            {isFavorite && <Star className="inline w-3 h-3 ml-1 text-amber-400 fill-amber-400 flex-shrink-0" />}
           </span>
-          <span className={`text-[10px] sm:text-[11px] font-medium flex-shrink-0 ${
-            unread > 0 ? "text-primary-500" : "text-slate-500 dark:text-slate-500"
+          <span className={`text-[11px] font-mono flex-shrink-0 ${
+            unread > 0 ? "text-[#38bdf8] font-semibold" : "text-slate-400 dark:text-slate-500"
           }`}>
             {time}
           </span>
         </div>
 
         <div className="flex justify-between items-center gap-2">
-          <p className={`text-sm flex-1 min-w-0 truncate flex items-center gap-1.5 ${
-            unread > 0 ? "text-slate-900 dark:text-white font-medium" : "text-slate-500 dark:text-slate-400"
+          <p className={`text-xs flex-1 min-w-0 truncate flex items-center gap-1.5 ${
+            unread > 0 
+              ? "text-slate-900 dark:text-slate-100 font-medium" 
+              : "text-slate-500 dark:text-slate-400"
           }`}>
             <span className="flex-shrink-0">
               <MessageStatusIcon
@@ -81,7 +105,7 @@ const ChatItem = ({ conv, isActive, onClick }) => {
             <span className="truncate">{preview}</span>
           </p>
           {unread > 0 && (
-            <span className="bg-primary-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center flex-shrink-0 shadow-sm">
+            <span className="bg-gradient-to-r from-[#6366f1] to-[#38bdf8] text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center flex-shrink-0 shadow-[0_0_10px_rgba(56,189,248,0.4)]">
               {unread > 99 ? "99+" : unread}
             </span>
           )}

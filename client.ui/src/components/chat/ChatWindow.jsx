@@ -11,48 +11,70 @@ import {
   groupMessagesByDate,
 } from "../../utils/chat";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Search, MoreVertical, Paperclip, Smile, Send, Edit2, Trash2, Reply, Check, CheckCheck, AlertCircle, CornerDownRight, X, Phone, Video, Mic, Square, Trash, Image, Download, CornerUpRight, ShieldBan } from "lucide-react";
+import { 
+  ArrowLeft, Search, MoreVertical, Paperclip, Smile, Send, Edit2, Trash2, Reply, 
+  Check, CheckCheck, AlertCircle, CornerDownRight, X, Phone, Video, Mic, Square, 
+  Trash, Image, Download, CornerUpRight, ShieldBan, User, Shield, Info, Lock, Clock, Plus, Copy
+} from "lucide-react";
 import ForwardModal from "./ForwardModal";
+import ProfileModal from "../profile/ProfileModal";
 import AnimatedReveal from "../shared/AnimatedReveal";
 import VoicePlayer from "./VoicePlayer";
 import api from "../../services/api";
 import { successtoast, errortoast } from "../../toastify/toastify";
 
 const MessageStatus = ({ status }) => {
-  if (status === "sending") return <Check className="w-3 h-3 text-slate-400 dark:text-slate-500" />;
-  if (status === "sent") return <Check className="w-3 h-3 text-slate-600 dark:text-slate-400" />;
-  if (status === "delivered") return <CheckCheck className="w-3 h-3 text-slate-600 dark:text-slate-400" />;
-  if (status === "seen") return <CheckCheck className="w-3 h-3 text-primary-500" />;
-  if (status === "failed") return <AlertCircle className="w-3 h-3 text-red-500" />;
-  return null;
+  const currentStatus = status || "sent";
+  if (currentStatus === "sending") {
+    return <Clock className="w-3.5 h-3.5 text-white/70 animate-pulse flex-shrink-0" title="Sending..." />;
+  }
+  if (currentStatus === "sent") {
+    return <Check className="w-3.5 h-3.5 text-white/75 flex-shrink-0" title="Sent to server" />;
+  }
+  if (currentStatus === "delivered") {
+    return <CheckCheck className="w-3.5 h-3.5 text-white/85 flex-shrink-0" title="Delivered to recipient" />;
+  }
+  if (currentStatus === "seen") {
+    return (
+      <CheckCheck 
+        className="w-3.5 h-3.5 text-[#2dd4bf] drop-shadow-[0_0_6px_rgba(45,212,191,0.7)] flex-shrink-0" 
+        title="Seen" 
+      />
+    );
+  }
+  if (currentStatus === "failed") {
+    return <AlertCircle className="w-3.5 h-3.5 text-rose-300 flex-shrink-0" title="Delivery failed" />;
+  }
+  return <Check className="w-3.5 h-3.5 text-white/75 flex-shrink-0" title="Sent" />;
 };
 
 const ReplyPreview = ({ msg, onCancel, loggedInUserId }) => {
   const isMe = String(msg.sender?._id || msg.sender) === String(loggedInUserId);
   return (
-  <motion.div 
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: 10 }}
-    className="flex items-center gap-3 px-4 py-3 bg-slate-900/80 backdrop-blur-md border-l-4 border-primary-500 mx-4 mb-2 rounded-xl shadow-lg border border-white/5"
-  >
-    <div className="flex-1 min-w-0">
-      <p className="text-xs text-primary-400 font-medium mb-0.5">
-        Replying to {isMe ? "You" : (msg.sender?.full_name || msg.sender?.name || "Someone")}
-      </p>
-      <p className="text-xs text-gray-300 truncate">{msg.text}</p>
-    </div>
-    <button
-      onClick={onCancel}
-      className="text-gray-400 hover:text-white text-sm flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 10 }}
+      className="flex items-center gap-3 px-4 py-3 bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-xl border-l-4 border-[#38bdf8] mx-4 mb-2 rounded-2xl shadow-xl border border-slate-200/80 dark:border-white/10"
     >
-      ✕
-    </button>
-  </motion.div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-[#38bdf8] font-semibold mb-0.5 tracking-tight flex items-center gap-1.5">
+          <Reply className="w-3.5 h-3.5 opacity-90" />
+          <span>Replying to {isMe ? "You" : (msg.sender?.full_name || msg.sender?.name || "Someone")}</span>
+        </p>
+        <p className="text-xs text-slate-600 dark:text-slate-300 truncate">{msg.text || (msg.image ? "📷 Photo" : msg.audioUrl ? "🎤 Voice Note" : "")}</p>
+      </div>
+      <button
+        onClick={onCancel}
+        className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+      >
+        ✕
+      </button>
+    </motion.div>
   );
 };
 
-const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
+const ChatWindow = ({ conversation, onUserStatusChange, onBack, openNewChat }) => {
   const [Auth, setAuth] = useAuth();
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState(null);
@@ -60,6 +82,7 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
   const [editText, setEditText] = useState("");
   const [deletingId, setDeletingId] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [pulseActive, setPulseActive] = useState(false);
   const [pulseMessage, setPulseMessage] = useState("");
@@ -75,6 +98,7 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
   const [showRestoreNotice, setShowRestoreNotice] = useState(false);
 
   const bottomRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
   const typingTimerRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -133,14 +157,24 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
     };
   }, [reportScreenshotAttempt]);
 
-  // auto scroll
+  // auto scroll (container-only scroll, NEVER scrolls window/document)
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
   }, [messages, typingUsers]);
 
-  // focus input
+  // focus input and instant scroll to bottom on conversation change
   useEffect(() => {
-    if (conversation) inputRef.current?.focus();
+    if (conversation) {
+      inputRef.current?.focus();
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    }
     setReplyTo(null); // clear reply when switching conversation
   }, [conversation?._id]);
 
@@ -176,34 +210,52 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
 
   if (!conversation) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-background gap-4 text-gray-500 relative overflow-hidden">
-        {/* Background Decorative Blobs */}
-        <div className="absolute top-[20%] left-[30%] w-96 h-96 bg-red-500 rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-pulse"></div>
-        <div className="absolute bottom-[20%] right-[30%] w-96 h-96 bg-rose-500 rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-pulse" style={{ animationDelay: "2s" }}></div>
+      <div className="flex-1 flex flex-col items-center justify-center bg-slate-50/50 dark:bg-transparent p-6 text-center relative overflow-hidden select-none">
+        {/* Background Ambient Glow & Light Beams */}
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[450px] bg-gradient-to-tr from-[#6366f1]/25 via-[#38bdf8]/20 to-[#2dd4bf]/20 blur-[150px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-10 -right-20 w-[450px] h-[450px] bg-[#4f46e5]/15 blur-[160px] rounded-full pointer-events-none" />
         
         <motion.div 
-          initial={{ scale: 0.9, opacity: 0 }} 
-          animate={{ scale: 1, opacity: 1 }} 
-          className="relative z-10 flex flex-col items-center gap-4"
+          initial={{ scale: 0.95, opacity: 0, y: 15 }} 
+          animate={{ scale: 1, opacity: 1, y: 0 }} 
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="relative z-10 max-w-sm flex flex-col items-center"
         >
-          <motion.div 
-            animate={{ scale: [1, 1.05, 1], rotate: [0, -2, 2, 0] }}
-            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-            className="w-28 h-28 rounded-full bg-gradient-to-br from-red-500/20 to-rose-500/10 flex items-center justify-center shadow-[inset_0_0_20px_rgba(239,68,68,0.2)] border border-red-500/30 backdrop-blur-xl mb-2"
-          >
-            <motion.span 
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-              className="text-6xl drop-shadow-[0_0_15px_rgba(239,68,68,0.8)]"
+          {/* Refined Brand Emblem */}
+          <div className="w-20 h-20 rounded-3xl bg-white dark:bg-[#0c1228] border border-slate-200/90 dark:border-white/10 flex items-center justify-center shadow-lg shadow-slate-200/50 dark:shadow-black/50 mb-5 relative group">
+            <span className="text-3xl">🫀</span>
+            <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#2dd4bf] ring-4 ring-slate-50 dark:ring-[#07090e]" />
+          </div>
+
+          {/* Brand Heading */}
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">
+            PulseChat
+          </h2>
+
+          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6 text-center max-w-sm">
+            Select a conversation from the sidebar to view your messages, or start a new direct conversation.
+          </p>
+
+          {/* Action Button */}
+          {openNewChat && (
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={openNewChat}
+              className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-gradient-to-r from-[#4f46e5] to-[#38bdf8] text-white shadow-md shadow-indigo-500/20 hover:opacity-95 transition-all flex items-center gap-2 mb-6"
             >
-              🫀
-            </motion.span>
-          </motion.div>
-          <h3 className="text-3xl font-bold drop-shadow-md tracking-wider">
-            <span className="text-red-500">Pulse</span>
-            <span className="text-blue-500">Chat</span>
-          </h3>
-          <p className="text-sm">Select a chat or start a new conversation</p>
+              <Plus className="w-4 h-4" />
+              <span>New Conversation</span>
+            </motion.button>
+          )}
+
+          <div className="flex items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-2">
+            <span className="px-2 py-0.5 rounded bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300/40 dark:border-white/5 font-sans font-medium">Enter</span>
+            <span>to send</span>
+            <span>•</span>
+            <span className="px-2 py-0.5 rounded bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300/40 dark:border-white/5 font-sans font-medium">Shift + Enter</span>
+            <span>new line</span>
+          </div>
         </motion.div>
       </div>
     );
@@ -457,71 +509,113 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
         <AnimatePresence>
           {pulseMessage && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.5, y: "-50%", x: "-50%" }}
-              animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
-              exit={{ opacity: 0, scale: 1.5, filter: "blur(10px)" }}
-              className="absolute top-1/2 left-1/2 z-50 pointer-events-none"
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              className="absolute top-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
             >
-              <div className="bg-red-500/90 text-white px-8 py-4 rounded-full text-2xl font-bold shadow-[0_0_40px_rgba(239,68,68,0.8)] backdrop-blur-md flex items-center gap-4 border border-red-400">
-                <span className="text-4xl animate-pulse">🫀</span>
-                {pulseMessage}
+              <div className="bg-gradient-to-r from-rose-500/90 to-pink-600/90 text-white px-5 py-2 rounded-full text-sm font-semibold shadow-lg shadow-rose-500/30 backdrop-blur-md flex items-center gap-2.5 border border-rose-300/30">
+                <span className="text-lg animate-bounce">🫀</span>
+                <span>{pulseMessage}</span>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Header */}
-      <div className="h-20 flex items-center gap-3 px-4 md:px-6 border-b border-slate-200 dark:border-slate-800 flex-shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl z-10 shadow-sm transition-colors duration-500">
-        {onBack && (
-          <button onClick={onBack} className="md:hidden transition-colors mr-1 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
-            <ArrowLeft className="w-6 h-6" />
-          </button>
-        )}
-        <div
-          onClick={() => navigate("/profile", { state: { user: otherUser } })}
-          className="relative w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
-          style={{ background: bg, color: fg }}
-        >
-          {getInitials(otherUser?.full_name || otherUser?.name)}
-          {otherUser?.isOnline && (
-            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-white dark:border-slate-900" />
+      <div className="h-20 flex items-center justify-between gap-3 px-4 sm:px-6 border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 bg-white/80 dark:bg-[#0c1228]/80 backdrop-blur-xl z-20 shadow-sm transition-all duration-300">
+        <div className="flex items-center gap-3 min-w-0">
+          {onBack && (
+            <button 
+              onClick={onBack} 
+              className="md:hidden p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors mr-1"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
           )}
-        </div>
 
-        <div 
-          onClick={() => navigate("/profile", { state: { user: otherUser } })}
-          className="flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
-        >
-          <p className="text-base font-medium truncate tracking-wide text-slate-900 dark:text-white">
-            {otherUser?.full_name || otherUser?.name || "Unknown"}
-          </p>
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-            {typingUsers ? (
-              <span className="text-blue-500 animate-pulse">typing...</span>
-            ) : otherUser?.isOnline ? (
-              <span className="text-green-600 dark:text-green-500">Online</span>
-            ) : otherUser?.lastSeen ? (
-              <span>Last seen {formatTime(otherUser.lastSeen)}</span>
-            ) : (
-              <span>Last seen recently</span>
-            )}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          
-           
-          
-          
-          
-          <motion.button
-           onClick={handleToggleBlock}
+          {/* User Avatar with Profile Modal Trigger */}
+          <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            title={isBlocked ? "Unblock User" : "Block User"}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
+            onClick={() => setShowProfile(true)}
+            className="relative w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-sm cursor-pointer border border-white/10 group overflow-hidden"
+            style={!(otherUser?.profilepicture || otherUser?.avatar) ? { background: bg, color: fg } : {}}
           >
-            <ShieldBan className="w-5 h-5" />
+            {(otherUser?.profilepicture || otherUser?.avatar) ? (
+              <img 
+                src={otherUser.profilepicture || otherUser.avatar} 
+                alt={otherUser?.full_name || otherUser?.name || "Avatar"} 
+                className="w-full h-full object-cover" 
+              />
+            ) : (
+              getInitials(otherUser?.full_name || otherUser?.name)
+            )}
+            {otherUser?.isOnline && (
+              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#2dd4bf] ring-2 ring-white dark:ring-[#0c1228] shadow-[0_0_8px_#2dd4bf] z-10" />
+            )}
+          </motion.div>
+
+          <div 
+            onClick={() => setShowProfile(true)}
+            className="flex-1 min-w-0 cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              <p className="text-base font-bold truncate tracking-tight text-slate-900 dark:text-white hover:text-[#38bdf8] transition-colors">
+                {otherUser?.full_name || otherUser?.name || "Unknown"}
+              </p>
+              {otherUser?.isadmin && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                  ADMIN
+                </span>
+              )}
+            </div>
+            <p className="text-xs font-medium mt-0.5">
+              {typingUsers ? (
+                <span className="text-[#38bdf8] font-semibold flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#38bdf8] animate-ping" />
+                  <span>typing...</span>
+                </span>
+              ) : otherUser?.isOnline ? (
+                <span className="text-[#2dd4bf] font-medium flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#2dd4bf] shadow-[0_0_6px_#2dd4bf]" />
+                  <span>Active now</span>
+                </span>
+              ) : otherUser?.lastSeen ? (
+                <span className="text-slate-400 dark:text-slate-500 font-mono text-[11px]">
+                  Last seen {formatTime(otherUser.lastSeen)}
+                </span>
+              ) : (
+                <span className="text-slate-400 dark:text-slate-500 text-[11px]">Last seen recently</span>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* Right Action Icons */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={() => setShowProfile(true)}
+            title="View Profile Details"
+            className="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200/80 dark:border-white/5 bg-slate-100/80 dark:bg-slate-800/60 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:border-[#38bdf8]/40 transition-all"
+          >
+            <User className="w-4 h-4" />
+          </motion.button>
+
+          <motion.button
+            onClick={handleToggleBlock}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            title={isBlocked ? "Unblock Contact" : "Block Contact"}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${
+              isBlocked 
+                ? "border-rose-500/30 bg-rose-500/10 text-rose-500 dark:text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.2)]"
+                : "border-slate-200/80 dark:border-white/5 bg-slate-100/80 dark:bg-slate-800/60 text-slate-500 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400 hover:border-rose-500/40"
+            }`}
+          >
+            <ShieldBan className="w-4 h-4" />
           </motion.button>
         </div>
       </div>
@@ -541,7 +635,10 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
       )}
 
       {/* Messages */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6 flex flex-col gap-2 custom-scrollbar bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-500">
+      <div 
+        ref={messagesContainerRef}
+        className="flex-1 min-h-0 overflow-y-auto px-6 py-6 flex flex-col gap-2 custom-scrollbar bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-500"
+      >
         {loading ? (
           <div className="flex flex-col gap-4 pt-4">
             {[...Array(5)].map((_, i) => (
@@ -564,8 +661,8 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
         ) : (
           grouped.map(({ label, messages: group }) => (
             <div key={label} className="flex flex-col gap-2">
-              <div className="flex items-center justify-center my-4 sticky top-0 z-10">
-                <span className="text-[11px] font-medium text-gray-300 bg-slate-800/90 backdrop-blur-md border border-white/5 px-4 py-1.5 rounded-full shadow-sm">
+              <div className="flex items-center justify-center my-4 sticky top-0 z-10 pointer-events-none">
+                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 bg-slate-200/80 dark:bg-slate-800/90 backdrop-blur-md border border-slate-300/40 dark:border-white/5 px-3.5 py-1 rounded-full shadow-sm">
                   {label}
                 </span>
               </div>
@@ -596,29 +693,33 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     key={msg._id}
-                    className={`flex ${isMe ? "justify-end" : "justify-start"} group mb-1`}
+                    className={`flex ${isMe ? "justify-end" : "justify-start"} group mb-1.5`}
                   >
-                    <div className="flex flex-col max-w-[70%]">
+                    <div className="flex flex-col max-w-[75%] sm:max-w-[70%]">
 
                       {/* reply preview inside bubble */}
                       {msg.replyTo && (
-                        <div className={`text-xs px-3 py-2 rounded-lg mb-1 border-l-4 border-primary-400/50 backdrop-blur-sm ${
-                          isMe ? "bg-primary-900/30 text-gray-200" : "bg-slate-700/50 text-gray-200"
+                        <div className={`text-xs px-3 py-2 rounded-xl mb-1.5 border-l-4 backdrop-blur-sm ${
+                          isMe 
+                            ? "bg-white/15 border-white/60 text-white" 
+                            : "bg-slate-100/90 dark:bg-[#151e3b]/90 border-[#38bdf8] text-slate-800 dark:text-slate-200"
                         }`}>
-                          <p className="text-primary-300 font-medium text-[10px] mb-0.5 tracking-wide flex items-center gap-1">
-                            <Reply className="w-3 h-3 opacity-80" />
-                            {String(msg.replyTo.sender?._id || msg.replyTo.sender) === String(loggedInUserId) 
+                          <p className={`font-semibold text-[10px] mb-0.5 tracking-tight flex items-center gap-1 ${
+                            isMe ? "text-white/90" : "text-[#38bdf8]"
+                          }`}>
+                            <Reply className="w-3 h-3 opacity-90" />
+                            <span>{String(msg.replyTo.sender?._id || msg.replyTo.sender) === String(loggedInUserId) 
                               ? "You" 
-                              : (msg.replyTo.sender?.full_name || "Someone")}
+                              : (msg.replyTo.sender?.full_name || "Someone")}</span>
                           </p>
                           {msg.replyTo.image ? (
-                            <div className="flex items-center gap-2 mt-1">
-                              <Image className="w-4 h-4 opacity-70" />
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <Image className="w-3.5 h-3.5 opacity-80" />
                               <span className="opacity-90 italic text-[11px]">Photo</span>
                             </div>
                           ) : msg.replyTo.audioUrl ? (
-                            <div className="flex items-center gap-2 mt-1">
-                              <Mic className="w-4 h-4 opacity-70" />
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <Mic className="w-3.5 h-3.5 opacity-80" />
                               <span className="opacity-90 italic text-[11px]">Voice Note</span>
                             </div>
                           ) : (
@@ -627,15 +728,15 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
                         </div>
                       )}
 
-                      <div className={`relative ${isOnlyImage ? 'p-1 rounded-2xl bg-transparent' : 'px-4 py-2.5 rounded-2xl shadow-sm'} text-[15px] leading-relaxed ${
+                      <div className={`relative ${isOnlyImage ? 'p-1 rounded-2xl bg-transparent' : 'px-4 py-2.5 rounded-[18px]'} text-[14px] leading-relaxed transition-all ${
                         isMe
-                          ? (isOnlyImage ? "" : "bg-gradient-to-br from-primary-500 to-primary-600 text-white rounded-tr-sm")
-                          : (isOnlyImage ? "" : "bg-surface border border-white/5 text-gray-100 rounded-tl-sm")
-                      } ${msg.status === "sending" ? "opacity-70" : "opacity-100"}`}>
+                          ? (isOnlyImage ? "" : "bg-gradient-to-br from-[#4f46e5] via-[#4338ca] to-[#3b82f6] text-white shadow-md shadow-indigo-950/20 rounded-br-[4px] border border-white/10")
+                          : (isOnlyImage ? "" : "bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800/80 text-slate-900 dark:text-slate-100 shadow-sm shadow-slate-200/40 dark:shadow-black/20 rounded-bl-[4px]")
+                      } ${msg.status === "sending" ? "opacity-75" : "opacity-100"}`}>
 
                         {/* Action Bar on hover */}
                         {!msg.isDeleted && (
-                          <div className={`absolute top-1/2 -translate-y-1/2 ${isMe ? 'right-full mr-3' : 'left-full ml-3'} opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-1 bg-white dark:bg-slate-800 shadow-md border border-slate-200 dark:border-slate-700 rounded-full px-1.5 py-1 z-10 scale-95 group-hover:scale-100`}>
+                          <div className={`absolute top-1/2 -translate-y-1/2 ${isMe ? 'right-full mr-2.5' : 'left-full ml-2.5'} opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-1 bg-white/95 dark:bg-[#131b36]/95 shadow-xl border border-slate-200/80 dark:border-white/10 rounded-full px-2 py-1 z-10 scale-95 group-hover:scale-100 backdrop-blur-md`}>
                             {isMe && (
                               <>
                                 <button
@@ -643,66 +744,81 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
                                     setEditingId(msg._id);
                                     setEditText(msg.text);
                                   }}
-                                  className="p-1.5 text-slate-500 hover:text-green-500 dark:text-slate-400 dark:hover:text-green-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+                                  className="p-1.5 text-slate-500 hover:text-emerald-500 dark:text-slate-400 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                                   title="Edit"
                                 >
-                                  <Edit2 className="w-4 h-4" />
+                                  <Edit2 className="w-3.5 h-3.5" />
                                 </button>
                                 <button
                                   onClick={() => setDeletingId(msg._id)}
-                                  className="p-1.5 text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+                                  className="p-1.5 text-slate-500 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                                   title="Delete"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               </>
                             )}
+                            {msg.text && (
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(msg.text);
+                                  successtoast("Copied to clipboard");
+                                }}
+                                className="p-1.5 text-slate-500 hover:text-indigo-500 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                                title="Copy text"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                             <button
                               onClick={() => setReplyTo(msg)}
-                              className="p-1.5 text-slate-500 hover:text-blue-500 dark:text-slate-400 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+                              className="p-1.5 text-slate-500 hover:text-[#38bdf8] dark:text-slate-400 dark:hover:text-[#38bdf8] hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                               title="Reply"
                             >
-                              <Reply className="w-4 h-4" />
+                              <Reply className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => setForwardMessageId(msg._id)}
-                              className="p-1.5 text-slate-500 hover:text-purple-500 dark:text-slate-400 dark:hover:text-purple-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+                              className="p-1.5 text-slate-500 hover:text-purple-500 dark:text-slate-400 dark:hover:text-purple-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                               title="Forward"
                             >
-                              <CornerUpRight className="w-4 h-4" />
+                              <CornerUpRight className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         )}
 
                         {msg.isDeleted ? (
-                          <p className="break-words italic opacity-70 flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4" /> This message was deleted
+                          <p className="break-words italic opacity-70 flex items-center gap-2 text-xs">
+                            <AlertCircle className="w-3.5 h-3.5" /> This message was deleted
                           </p>
                         ) : (
                           <>
                             {msg.image && (
-                              <div className={`${msg.text || msg.audioUrl ? 'mb-2' : 'mb-0'} max-w-[250px] sm:max-w-[300px] relative group`}>
-                                <div className="bg-white dark:bg-slate-900 rounded-lg overflow-hidden border border-white/10 shadow-sm relative">
-                                  <img src={`${import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1"}/messages/stream-audio?url=${encodeURIComponent(msg.image)}`} alt="Attachment" className="w-full" />
+                              <div className={`${msg.text || msg.audioUrl ? 'mb-2' : 'mb-0'} max-w-[250px] sm:max-w-[320px] relative group cursor-pointer`}>
+                                <div 
+                                  onClick={() => setLightboxImage(`${import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1"}/messages/stream-audio?url=${encodeURIComponent(msg.image)}`)}
+                                  className="bg-slate-100 dark:bg-[#0c1228] rounded-xl overflow-hidden border border-slate-200/80 dark:border-white/10 shadow-sm relative hover:scale-[1.01] transition-transform"
+                                >
+                                  <img src={`${import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1"}/messages/stream-audio?url=${encodeURIComponent(msg.image)}`} alt="Attachment" className="w-full object-cover" />
                                 </div>
                                 <button
                                   onClick={() => handleDownload(msg, 'image')}
-                                  className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                  className="absolute top-2 right-2 p-2 bg-black/60 hover:bg-black/80 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm shadow-md"
                                   title="Download Image"
                                 >
-                                  <Download className="w-4 h-4" />
+                                  <Download className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                             )}
                             {msg.audioUrl && (
-                               <div className={`${msg.text ? 'mb-2' : 'mb-0'} min-w-[200px] sm:min-w-[250px] relative group`}>
+                               <div className={`${msg.text ? 'mb-2' : 'mb-0'} min-w-[200px] sm:min-w-[260px] relative group`}>
                                  <VoicePlayer src={msg.audioUrl} isMe={isMe} />
                                  <button
                                    onClick={() => handleDownload(msg, 'audio')}
-                                   className={`absolute top-1/2 -translate-y-1/2 ${isMe ? 'left-0 -translate-x-[120%]' : 'right-0 translate-x-[120%]'} p-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-full opacity-0 group-hover:opacity-100 transition-opacity`}
+                                   className={`absolute top-1/2 -translate-y-1/2 ${isMe ? 'left-0 -translate-x-[120%]' : 'right-0 translate-x-[120%]'} p-2 bg-slate-200/80 dark:bg-slate-800/80 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm shadow-sm`}
                                    title="Download Audio"
                                  >
-                                   <Download className="w-4 h-4" />
+                                   <Download className="w-3.5 h-3.5" />
                                  </button>
                                </div>
                             )}
@@ -711,15 +827,15 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
                         )}
 
                         <div className={`flex items-center justify-end gap-1.5 mt-1.5 ${
-                          isMe ? "text-primary-100/70" : "text-gray-500"
+                          isMe ? "text-white/80" : "text-slate-400 dark:text-slate-500"
                         }`}>
-                          <span className="text-[10px] font-medium">
+                          <span className="text-[10px] font-mono">
                             {formatBubbleTime(msg.createdAt)}
-                            {msg.editedAt && <span className="ml-1 opacity-70">(edited)</span>}
+                            {msg.editedAt && <span className="ml-1 opacity-70 font-sans">(edited)</span>}
                           </span>
                           {isMe && <MessageStatus status={msg.status} />}
                           {isMe && msg.downloadedBy && msg.downloadedBy.length > 0 && (msg.image || msg.audioUrl) && (
-                            <span className="text-[9px] font-medium flex items-center gap-0.5 ml-1 text-green-300 bg-black/10 px-1 rounded">
+                            <span className="text-[9px] font-medium flex items-center gap-0.5 ml-1 text-emerald-200 bg-black/20 px-1 py-0.2 rounded">
                               <CheckCheck className="w-2.5 h-2.5" /> Saved
                             </span>
                           )}
@@ -728,13 +844,13 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
 
                       {/* Forwarded Indicators below message */}
                       {msg.isForwarded ? (
-                        <div className="flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 italic ml-1">
-                          <CornerUpRight className="w-3 h-3" />
+                        <div className="flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1 italic ml-1">
+                          <CornerUpRight className="w-3 h-3 text-[#38bdf8]" />
                           <span>Forwarded</span>
                         </div>
                       ) : (
                         msg.forwardCount > 0 && (
-                          <div className="flex items-center gap-1 text-[11px] font-medium text-purple-500 dark:text-purple-400 mt-0.5 italic ml-1">
+                          <div className="flex items-center gap-1 text-[11px] font-medium text-purple-500 dark:text-purple-400 mt-1 italic ml-1">
                             <CornerUpRight className="w-3 h-3" />
                             <span>Forwarded {msg.forwardCount} time{msg.forwardCount > 1 ? 's' : ''}</span>
                           </div>
@@ -745,7 +861,7 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
                       {msg.status === "failed" && (
                         <button
                           onClick={() => retryMessage(msg)}
-                          className="text-[11px] text-red-400 hover:text-red-300 mt-1 self-end font-medium transition-colors"
+                          className="text-[11px] text-rose-400 hover:text-rose-300 mt-1 self-end font-semibold transition-colors"
                         >
                           Tap to retry
                         </button>
@@ -761,15 +877,15 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
         {/* typing indicator bubble */}
         {typingUsers && (
           <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, scale: 0.9, y: 5 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
             className="flex justify-start mt-2"
           >
-            <div className="bg-surface border border-white/5 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm">
+            <div className="bg-white/90 dark:bg-[#11182e]/90 border border-slate-200/80 dark:border-white/10 px-4 py-3 rounded-2xl rounded-tl-sm shadow-md backdrop-blur-md">
               <div className="flex gap-1.5 items-center h-2">
-                <span className="w-1.5 h-1.5 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <span className="w-1.5 h-1.5 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <span className="w-1.5 h-1.5 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                <span className="w-1.5 h-1.5 bg-[#38bdf8] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-1.5 h-1.5 bg-[#2dd4bf] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-1.5 h-1.5 bg-[#818cf8] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
             </div>
           </motion.div>
@@ -785,7 +901,7 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
       </AnimatePresence>
 
       {/* Input */}
-      <div className="sticky bottom-0 p-2 sm:p-4 border-t flex-shrink-0 z-20 bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 backdrop-blur-xl transition-colors duration-500">
+      <div className="sticky bottom-0 p-2.5 sm:p-4 border-t flex-shrink-0 z-20 bg-white/80 dark:bg-[#0c1228]/80 border-slate-200/80 dark:border-white/5 backdrop-blur-2xl transition-colors duration-500">
         <div className="flex flex-wrap items-end gap-2 sm:gap-3 max-w-5xl mx-auto relative">
           
           <motion.button
@@ -794,10 +910,10 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
               setPulseMessage("Pulse Sent!");
               setTimeout(() => setPulseMessage(""), 1000);
             }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            title="Send Pulse"
-            className="hidden sm:flex w-12 h-12 rounded-full items-center justify-center transition-all flex-shrink-0 text-red-500 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-600 shadow-sm border border-red-500/20"
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            title="Send Pulse Ping"
+            className="hidden sm:flex w-12 h-12 rounded-2xl items-center justify-center transition-all flex-shrink-0 text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 shadow-[0_0_20px_rgba(244,63,94,0.2)] border border-rose-500/30"
           >
             <span className="text-xl">🫀</span>
           </motion.button>
@@ -808,7 +924,7 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="absolute bottom-full mb-4 right-2 sm:right-14 bg-white dark:bg-slate-800 shadow-2xl border border-slate-200 dark:border-slate-700 rounded-2xl p-3 w-64 sm:w-72 grid grid-cols-5 gap-2 z-50"
+                className="absolute bottom-full mb-4 right-2 sm:right-14 bg-white/95 dark:bg-[#0e152e]/95 backdrop-blur-2xl shadow-2xl border border-slate-200/80 dark:border-white/10 rounded-2xl p-3 w-64 sm:w-72 grid grid-cols-5 gap-2 z-50"
               >
                 {["😀","😂","🥰","😎","😢","👍","❤️","🔥","🎉","✨","🤔","🙌","👏","🙏","😊","😍","😁","🙄","😜","😘"].map((emoji) => (
                   <button
@@ -818,7 +934,7 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
                       setShowEmojiPicker(false);
                       inputRef.current?.focus();
                     }}
-                    className="text-2xl hover:bg-slate-100 dark:hover:bg-slate-700 p-2 rounded-xl transition-colors flex items-center justify-center"
+                    className="text-2xl hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded-xl transition-colors flex items-center justify-center"
                   >
                     {emoji}
                   </button>
@@ -827,53 +943,53 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
             )}
           </AnimatePresence>
 
-          <div className="flex-1 min-w-0 border border-slate-200 dark:border-slate-700 rounded-3xl relative flex items-center overflow-hidden transition-all focus-within:border-primary-500/50 bg-slate-50 dark:bg-slate-800 focus-within:bg-white dark:focus-within:bg-slate-900 shadow-sm focus-within:shadow-md h-[52px]">
+          <div className="flex-1 min-w-0 border border-slate-200/80 dark:border-white/10 rounded-2xl relative flex items-center overflow-hidden transition-all bg-slate-100/90 dark:bg-[#0e1428]/90 focus-within:border-[#38bdf8]/50 focus-within:bg-white dark:focus-within:bg-[#131b36] shadow-sm focus-within:shadow-[0_0_25px_rgba(56,189,248,0.2)] h-[52px]">
             {isRecording ? (
-              <div className="w-full h-full flex items-center justify-between px-3 sm:px-5 bg-red-50 dark:bg-red-500/10">
+              <div className="w-full h-full flex items-center justify-between px-3 sm:px-5 bg-rose-500/10">
                 <div className="flex items-center gap-2 sm:gap-3">
                   <div className="relative flex items-center justify-center">
-                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500 z-10" />
-                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500 absolute animate-ping opacity-75" />
+                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-rose-500 z-10" />
+                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-rose-500 absolute animate-ping opacity-75" />
                   </div>
-                  <span className="text-red-500 font-medium tracking-wider text-xs sm:text-base w-10 sm:w-12">{formatRecordingTime(recordingTime)}</span>
+                  <span className="text-rose-500 font-mono font-medium tracking-wider text-xs sm:text-base w-10 sm:w-12">{formatRecordingTime(recordingTime)}</span>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
                   <button 
                     onClick={cancelRecording} 
-                    className="flex items-center px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-500 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-full transition-colors"
+                    className="flex items-center px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-colors"
                   >
                     Cancel
                   </button>
                   <button 
                     onClick={stopRecording} 
-                    className="flex items-center px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 dark:hover:bg-primary-500/20 rounded-full transition-colors sm:ml-2"
+                    className="flex items-center px-3 py-1.5 text-xs sm:text-sm font-semibold text-[#38bdf8] hover:text-[#2dd4bf] hover:bg-[#38bdf8]/10 rounded-xl transition-colors sm:ml-1"
                   >
                     Done
                   </button>
                 </div>
               </div>
             ) : audioPreviewUrl ? (
-              <div className="w-full h-full flex items-center justify-between px-2 sm:px-4 bg-slate-100 dark:bg-slate-700/50">
+              <div className="w-full h-full flex items-center justify-between px-2 sm:px-4 bg-slate-100/80 dark:bg-slate-800/50">
                 <div className="flex-1 flex items-center">
                   <VoicePlayer src={audioPreviewUrl} isMe={false} />
                 </div>
                 <button 
                   onClick={cancelRecording} 
-                  className="p-1.5 sm:p-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-colors flex-shrink-0"
+                  className="p-1.5 sm:p-2 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 rounded-xl transition-colors flex-shrink-0"
                   title="Delete Recording"
                 >
                   <Trash className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
             ) : imagePreviewUrl ? (
-              <div className="w-full h-full flex items-center justify-between px-2 sm:px-4 bg-slate-100 dark:bg-slate-700/50">
+              <div className="w-full h-full flex items-center justify-between px-2 sm:px-4 bg-slate-100/80 dark:bg-slate-800/50">
                 <div className="flex-1 flex items-center py-1">
-                  <img src={imagePreviewUrl} alt="Preview" className="h-10 w-10 object-cover rounded-md shadow-sm border border-slate-300 dark:border-slate-600" />
-                  <span className="ml-3 text-sm font-medium text-slate-600 dark:text-slate-300">Image attached</span>
+                  <img src={imagePreviewUrl} alt="Preview" className="h-10 w-10 object-cover rounded-xl shadow-sm border border-slate-300 dark:border-white/10" />
+                  <span className="ml-3 text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300">Image attached</span>
                 </div>
                 <button 
                   onClick={cancelImage} 
-                  className="p-1.5 sm:p-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-colors flex-shrink-0"
+                  className="p-1.5 sm:p-2 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 rounded-xl transition-colors flex-shrink-0"
                   title="Remove Image"
                 >
                   <Trash className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -887,20 +1003,20 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
                   disabled={isBlocked}
-                  placeholder={replyTo ? "Type a reply..." : isBlocked ? "Messaging is paused while this user is blocked" : "Type a message..."}
-                  className="w-full h-full py-3.5 pl-4 sm:pl-6 pr-20 sm:pr-24 bg-transparent text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 text-[15px] outline-none disabled:cursor-not-allowed"
+                  placeholder={replyTo ? "Type a reply..." : isBlocked ? "Messaging is paused while this contact is blocked" : "Type a message..."}
+                  className="w-full h-full py-3.5 pl-4 sm:pl-6 pr-20 sm:pr-24 bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-[14.5px] outline-none disabled:cursor-not-allowed"
                 />
-                <label title="Attach Image" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors cursor-pointer absolute right-10 sm:right-12 z-10">
-                  <Paperclip className="w-5 h-5" />
+                <label title="Attach Image" className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-[#38bdf8] dark:hover:text-[#38bdf8] hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors cursor-pointer absolute right-10 sm:right-12 z-10">
+                  <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
                   <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
                 </label>
                 <motion.button
                   onClick={() => setShowEmojiPicker((prev) => !prev)}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-colors absolute right-1 sm:right-2 ${showEmojiPicker ? "text-primary-500 bg-primary-50 dark:bg-primary-500/10" : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"}`}
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-colors absolute right-1 sm:right-2 ${showEmojiPicker ? "text-[#38bdf8] bg-[#38bdf8]/10" : "text-slate-400 dark:text-slate-500 hover:text-[#38bdf8]"}`}
                 >
-                  <Smile className="w-5 h-5" />
+                  <Smile className="w-4 h-4 sm:w-5 sm:h-5" />
                 </motion.button>
               </>
             )}
@@ -912,7 +1028,7 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
               whileTap={{ scale: 0.95 }}
               onClick={startRecording}
               title="Record Voice Note"
-              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex-shrink-0 shadow-sm"
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center bg-slate-100 text-slate-600 dark:bg-slate-800/80 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex-shrink-0 shadow-sm border border-slate-200/80 dark:border-white/5"
             >
               <Mic className="w-5 h-5" />
             </motion.button>
@@ -922,10 +1038,18 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
               whileTap={{ scale: 0.95 }}
               onClick={handleSend}
               disabled={(!text.trim() && !audioBlob && !imageBase64) || sending || uploadingAudio || uploadingImage}
-              title="Send"
-              className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white transition-all flex-shrink-0 shadow-lg ${uploadingAudio || uploadingImage ? 'bg-primary-400 animate-pulse' : 'bg-primary-500 hover:bg-primary-600'} disabled:opacity-40 disabled:cursor-not-allowed shadow-primary-500/30`}
+              title="Send Message"
+              className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-white transition-all flex-shrink-0 shadow-[0_0_20px_rgba(45,212,191,0.35)] hover:opacity-95 ${
+                uploadingAudio || uploadingImage 
+                  ? 'bg-gradient-to-r from-indigo-500 to-sky-500 animate-pulse' 
+                  : 'bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf]'
+              } disabled:opacity-40 disabled:cursor-not-allowed`}
             >
-              {uploadingAudio || uploadingImage ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Send className="w-5 h-5 translate-x-0.5" />}
+              {uploadingAudio || uploadingImage ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Send className="w-4 h-4 sm:w-5 sm:h-5 translate-x-0.5" />
+              )}
             </motion.button>
           )}
         </div>
@@ -938,27 +1062,27 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-md p-4"
             onClick={() => setEditingId(null)}
           >
             <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
-              className="bg-slate-900 rounded-2xl p-6 w-96 shadow-2xl border border-white/10"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-[#0d1326] rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-200/80 dark:border-white/10"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-white font-semibold text-lg mb-4">Edit Message</h3>
+              <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-4">Edit Message</h3>
               <textarea
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
-                className="w-full p-3 bg-slate-800 text-white border border-white/20 rounded-lg outline-none focus:border-white/40 resize-none text-sm"
+                className="w-full p-3.5 bg-slate-100 dark:bg-[#141b36] text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-2xl outline-none focus:border-[#38bdf8]/60 focus:shadow-[0_0_15px_rgba(56,189,248,0.2)] resize-none text-sm transition-all"
                 rows="4"
               />
-              <div className="flex gap-3 mt-4">
+              <div className="flex gap-3 mt-5">
                 <button
                   onClick={() => setEditingId(null)}
-                  className="flex-1 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors"
+                  className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-sm"
                 >
                   Cancel
                 </button>
@@ -967,7 +1091,7 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
                     await editMessage(editingId, editText);
                     setEditingId(null);
                   }}
-                  className="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex-1 py-2.5 bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-white font-semibold rounded-xl hover:opacity-95 shadow-[0_0_15px_rgba(45,212,191,0.3)] transition-all text-sm"
                 >
                   Save
                 </button>
@@ -984,22 +1108,22 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-md p-4"
             onClick={() => setDeletingId(null)}
           >
             <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
-              className="bg-slate-900 rounded-2xl p-6 w-80 shadow-2xl border border-white/10"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-[#0d1326] rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-slate-200/80 dark:border-white/10"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-white font-semibold text-lg mb-2">Delete Message?</h3>
-              <p className="text-gray-400 text-sm mb-4">This action cannot be undone.</p>
+              <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-2">Delete Message?</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mb-5">This action permanently deletes this message from this thread.</p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setDeletingId(null)}
-                  className="flex-1 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors"
+                  className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-sm"
                 >
                   Cancel
                 </button>
@@ -1008,7 +1132,7 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
                     await deleteMessage(deletingId);
                     setDeletingId(null);
                   }}
-                  className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  className="flex-1 py-2.5 bg-rose-600 text-white font-semibold rounded-xl hover:bg-rose-700 shadow-[0_0_15px_rgba(244,63,94,0.3)] transition-colors text-sm"
                 >
                   Delete
                 </button>
@@ -1033,6 +1157,33 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack }) => {
           forwardMessage(forwardMessageId, targetConversationId);
         }}
       />
+
+      {/* Lightbox Modal */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxImage(null)}
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 select-none"
+          >
+            <button
+              onClick={() => setLightboxImage(null)}
+              className="absolute top-5 right-5 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all shadow-lg"
+              title="Close Preview"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <img
+              src={lightboxImage}
+              alt="Full Preview"
+              onClick={(e) => e.stopPropagation()}
+              className="max-h-[85vh] max-w-[90vw] object-contain rounded-2xl shadow-2xl border border-white/10"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
       </motion.div>
   );
 };

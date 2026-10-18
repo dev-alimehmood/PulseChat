@@ -61,65 +61,68 @@ const NewChatModal = ({ onSelectUser, onClose }) => {
 
   return (
     <ModalWrapper onClose={onClose}>
-      <div className="rounded-2xl w-80 md:w-96 overflow-hidden shadow-2xl backdrop-blur-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 transition-colors duration-500">
+      <div className="rounded-3xl w-88 md:w-[420px] overflow-hidden shadow-2xl backdrop-blur-2xl bg-white dark:bg-[#0c1228] border border-slate-200/80 dark:border-white/10 transition-all duration-300">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b backdrop-blur-md border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80">
-          <span className="font-medium text-sm text-slate-900 dark:text-white">
-            New Chat
-          </span>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/80 dark:border-white/5 bg-slate-50/80 dark:bg-[#0e1630]/80">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🫀</span>
+            <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white">
+              Start New Thread
+            </span>
+          </div>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-full flex items-center justify-center transition-colors text-slate-500 hover:text-slate-900 hover:bg-slate-200 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800"
+            className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors text-slate-400 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Search */}
-        <div className="p-3 border-b backdrop-blur-md border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
-          <div className="relative flex items-center">
-            <SearchIcon className="absolute left-3 w-4 h-4 pointer-events-none text-slate-400 dark:text-slate-500" />
+        <div className="p-4 border-b border-slate-200/80 dark:border-white/5 bg-white/40 dark:bg-[#0c1228]/40">
+          <div className="relative flex items-center group">
+            <SearchIcon className="absolute left-3.5 w-4 h-4 pointer-events-none text-slate-400 dark:text-slate-500 group-focus-within:text-[#38bdf8] transition-colors" />
             <input
               ref={inputRef}
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name or email..."
-              className="w-full pl-9 pr-4 py-1.5 rounded-full text-sm outline-none border transition-all backdrop-blur-md bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 border-transparent dark:border-slate-700 focus:border-slate-300 dark:focus:border-slate-600 focus:bg-white dark:focus:bg-slate-900"
+              placeholder="Search contacts by name or email..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-2xl text-sm outline-none border transition-all duration-300 bg-slate-100/90 dark:bg-[#090e1f] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 border-slate-200 dark:border-white/5 focus:border-[#38bdf8]/50 focus:bg-white dark:focus:bg-[#121936] focus:shadow-[0_0_15px_rgba(56,189,248,0.2)]"
             />
           </div>
         </div>
 
         {/* User list */}
-        <div className="max-h-72 overflow-y-auto custom-scrollbar bg-white dark:bg-slate-900">
+        <div className="max-h-80 overflow-y-auto custom-scrollbar p-2 bg-white dark:bg-[#0c1228]">
           {loading ? (
-            <div className="flex flex-col">
+            <div className="flex flex-col gap-1 p-2">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-800/50">
-                  <div className="w-9 h-9 rounded-full animate-pulse flex-shrink-0 bg-slate-200 dark:bg-slate-800" />
+                <div key={i} className="flex items-center gap-3.5 px-3 py-3 rounded-2xl border border-slate-200/40 dark:border-white/5 bg-slate-100/40 dark:bg-slate-800/20 animate-pulse">
+                  <div className="w-10 h-10 rounded-2xl bg-slate-200 dark:bg-slate-800 flex-shrink-0" />
                   <div className="flex flex-col gap-2 flex-1">
-                    <div className="h-3 w-28 rounded animate-pulse bg-slate-200 dark:bg-slate-800" />
-                    <div className="h-2.5 w-36 rounded animate-pulse bg-slate-100 dark:bg-slate-800/50" />
+                    <div className="h-3 w-28 rounded bg-slate-200 dark:bg-slate-800" />
+                    <div className="h-2.5 w-36 rounded bg-slate-100 dark:bg-slate-800/50" />
                   </div>
                 </div>
               ))}
             </div>
           ) : error ? (
-            <div className="flex flex-col items-center justify-center py-8 gap-2">
-              <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+            <div className="flex flex-col items-center justify-center py-10 gap-2 text-center">
+              <p className="text-sm text-rose-500 dark:text-rose-400">{error}</p>
               <button
                 onClick={() => setSearch((s) => s + " ")}
-                className="text-xs transition-colors text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                className="text-xs font-semibold text-[#38bdf8] hover:underline"
               >
                 Retry
               </button>
             </div>
           ) : users.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 gap-2 text-slate-500 dark:text-slate-400">
-              <UserX className="w-8 h-8 opacity-50" />
-              <p className="text-sm font-medium">
-                {search ? "No users found" : "No users available"}
+            <div className="flex flex-col items-center justify-center py-10 gap-2 text-slate-400 dark:text-slate-500 text-center">
+              <UserX className="w-8 h-8 opacity-40 mb-1" />
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                {search ? "No matching contacts found" : "No other users available"}
               </p>
             </div>
           ) : (
@@ -129,29 +132,29 @@ const NewChatModal = ({ onSelectUser, onClose }) => {
                 <div
                   key={user._id}
                   onClick={() => onSelectUser(user)}
-                  className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 group"
+                  className="flex items-center gap-3.5 px-3.5 py-3 cursor-pointer rounded-2xl transition-all duration-200 hover:bg-gradient-to-r hover:from-[#6366f1]/10 hover:to-[#38bdf8]/10 group border border-transparent hover:border-[#38bdf8]/30 mb-1"
                 >
                   <div
-                    className="relative w-9 h-9 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0"
+                    className="relative w-10 h-10 rounded-2xl flex items-center justify-center text-xs font-bold flex-shrink-0 shadow-sm border border-white/10 group-hover:scale-105 transition-transform"
                     style={{ background: bg, color: fg }}
                   >
                     {getInitials(user.full_name)}
                     {user.isOnline && (
-                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-white dark:border-slate-900" />
+                      <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-[#2dd4bf] ring-2 ring-white dark:ring-[#0c1228] shadow-[0_0_6px_#2dd4bf]" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                    <p className="text-sm font-semibold truncate text-slate-900 dark:text-white group-hover:text-[#38bdf8] transition-colors">
                       {user.full_name}
                     </p>
-                    <p className="text-xs truncate text-slate-500 dark:text-slate-400">
+                    <p className="text-xs truncate text-slate-500 dark:text-slate-400 mt-0.5">
                       {user.isOnline
-                        ? <span className="text-green-600 dark:text-green-400">online</span>
+                        ? <span className="text-[#2dd4bf] font-medium">Active now</span>
                         : user.email
                       }
                     </p>
                   </div>
-                  <ChevronRight className="w-4 h-4 flex-shrink-0 text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                  <ChevronRight className="w-4 h-4 flex-shrink-0 text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 group-hover:text-[#38bdf8] transition-all" />
                 </div>
               );
             })

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, Loader2, Volume2 } from "lucide-react";
 import WaveSurfer from "wavesurfer.js";
 
 const formatTime = (time) => {
@@ -14,6 +14,7 @@ const VoicePlayer = ({ src, isMe }) => {
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [isReady, setIsReady] = useState(false);
+  const [speed, setSpeed] = useState(1);
   
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
@@ -23,13 +24,13 @@ const VoicePlayer = ({ src, isMe }) => {
 
     wavesurfer.current = WaveSurfer.create({
       container: waveformRef.current,
-      waveColor: isMe ? "rgba(255, 255, 255, 0.4)" : "rgba(59, 130, 246, 0.4)", // White for me, primary blue for other
-      progressColor: isMe ? "#ffffff" : "#3b82f6",
+      waveColor: isMe ? "rgba(255, 255, 255, 0.4)" : "rgba(129, 140, 248, 0.35)",
+      progressColor: isMe ? "#ffffff" : "#38bdf8",
       cursorColor: "transparent",
-      barWidth: 2,
-      barGap: 2,
-      barRadius: 2,
-      height: 30,
+      barWidth: 3,
+      barGap: 2.5,
+      barRadius: 3,
+      height: 28,
       normalize: true,
       hideScrollbar: true,
     });
@@ -83,29 +84,71 @@ const VoicePlayer = ({ src, isMe }) => {
     }
   };
 
+  const cycleSpeed = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const nextSpeed = speed === 1 ? 1.5 : speed === 1.5 ? 2 : 1;
+    setSpeed(nextSpeed);
+    if (wavesurfer.current) {
+      wavesurfer.current.setPlaybackRate(nextSpeed);
+    }
+  };
+
   return (
-    <div className={`flex items-center gap-3 py-1 ${isMe ? 'text-white' : 'text-slate-800 dark:text-slate-200'}`}>
+    <div className={`flex items-center gap-3 py-1.5 px-1 select-none ${isMe ? 'text-white' : 'text-slate-800 dark:text-slate-200'}`}>
+      {/* Play / Pause button */}
       <button 
         onClick={togglePlayPause}
         disabled={!isReady}
-        className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full transition-all ${
+        className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-2xl transition-all shadow-sm ${
           isMe 
-            ? 'bg-white/20 hover:bg-white/30 text-white' 
-            : 'bg-primary-100 hover:bg-primary-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-primary-600 dark:text-primary-400'
-        } ${!isReady ? 'opacity-50 cursor-not-allowed' : ''}`}
+            ? 'bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm active:scale-95' 
+            : 'bg-indigo-500/10 dark:bg-indigo-500/20 text-[#6366f1] dark:text-[#38bdf8] border border-indigo-500/20 dark:border-indigo-500/30 hover:bg-indigo-500/20 active:scale-95'
+        } ${!isReady ? 'opacity-60 cursor-not-allowed' : ''}`}
+        title={isPlaying ? "Pause voice note" : "Play voice note"}
       >
-        {isPlaying ? (
-          <Pause className="w-5 h-5 fill-current" />
+        {!isReady ? (
+          <Loader2 className="w-4 h-4 animate-spin opacity-80" />
+        ) : isPlaying ? (
+          <Pause className="w-4 h-4 fill-current" />
         ) : (
-          <Play className="w-5 h-5 fill-current translate-x-0.5" />
+          <Play className="w-4 h-4 fill-current translate-x-0.5" />
         )}
       </button>
 
-      <div className="flex flex-col flex-1 min-w-[120px] sm:min-w-[180px] w-full">
-        <div ref={waveformRef} className="w-full h-[30px] cursor-pointer" />
-        <div className={`flex justify-between mt-1 text-[11px] font-medium tracking-wide ${isMe ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'}`}>
-          <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration)}</span>
+      {/* Waveform & Timing */}
+      <div className="flex flex-col flex-1 min-w-[140px] sm:min-w-[200px] w-full">
+        <div ref={waveformRef} className="w-full h-[28px] cursor-pointer" />
+        
+        <div className={`flex justify-between items-center mt-1 text-[10px] font-mono tracking-wider ${isMe ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'}`}>
+          <div className="flex items-center gap-1.5">
+            {isPlaying && (
+              <span className="flex items-center gap-0.5">
+                <span className="w-1 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                <span className="w-1 h-3 bg-emerald-400 rounded-full animate-pulse" style={{ animationDelay: "150ms" }} />
+                <span className="w-1 h-2 bg-emerald-400 rounded-full animate-pulse" style={{ animationDelay: "300ms" }} />
+              </span>
+            )}
+            <span>{formatTime(currentTime)}</span>
+            <span>/</span>
+            <span>{formatTime(duration)}</span>
+          </div>
+
+          {/* Speed Multiplier Pill */}
+          <button
+            onClick={cycleSpeed}
+            disabled={!isReady}
+            title="Toggle playback speed"
+            className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md border transition-all ${
+              isMe
+                ? 'bg-white/20 hover:bg-white/30 text-white border-white/20'
+                : 'bg-slate-200/80 dark:bg-slate-800/80 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300/60 dark:border-white/10'
+            }`}
+          >
+            {speed}x
+          </button>
         </div>
       </div>
     </div>

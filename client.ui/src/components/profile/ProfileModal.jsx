@@ -54,18 +54,37 @@ const ProfileModal = ({ user, onClose }) => {
   };
 
   const handleImageUpload = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64String = reader.result;
+        let finalUrl = base64String;
         try {
           const { data } = await api.post("/messages/upload-image", { image: base64String });
           if (data.Location) {
-            setFormData({ ...formData, profilepicture: data.Location });
+            finalUrl = data.Location;
           }
         } catch (error) {
-          errortoast("Failed to upload image");
+          finalUrl = base64String;
+        }
+
+        setFormData((prev) => ({ ...prev, profilepicture: finalUrl }));
+
+        if (isMe) {
+          try {
+            const { data } = await api.put("/users/profile", { ...formData, profilepicture: finalUrl });
+            if (data.success && data.success.user) {
+              setAuth((prev) => ({
+                ...prev,
+                User: { ...prev.User, ...data.success.user }
+              }));
+              localStorage.setItem("user", JSON.stringify({ ...Auth.User, ...data.success.user }));
+              successtoast("Profile photo updated!");
+            }
+          } catch (err) {
+            console.error(err);
+          }
         }
       };
       reader.readAsDataURL(file);
@@ -88,25 +107,28 @@ const ProfileModal = ({ user, onClose }) => {
     <ModalWrapper onClose={onClose}>
       {/* Container: Full screen on mobile, modal on desktop */}
       <div
-        className="relative w-full h-[100dvh] md:h-auto md:w-[400px] md:max-h-[90vh] flex flex-col rounded-none md:rounded-3xl transform shadow-2xl bg-white dark:bg-slate-900 md:border border-slate-200 dark:border-slate-800 overflow-hidden"
+        className="relative w-full h-[100dvh] md:h-auto md:w-[420px] md:max-h-[90vh] flex flex-col rounded-none md:rounded-3xl transform shadow-2xl bg-white dark:bg-[#0c1228] md:border border-slate-200/80 dark:border-white/10 overflow-hidden backdrop-blur-2xl"
       >
           <div className="flex flex-col w-full h-full">
             
             {/* Native App Header */}
-            <div className="shrink-0 z-20 flex items-center justify-between px-4 py-3 md:px-6 md:py-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 md:border-none">
+            <div className="shrink-0 z-20 flex items-center justify-between px-5 py-4 bg-white/80 dark:bg-[#0e1630]/80 backdrop-blur-md border-b border-slate-100 dark:border-white/5 md:border-none">
               <button
                 onClick={onClose}
-                className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                className="w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200 bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
               >
                 <X className="w-5 h-5" />
               </button>
               
-              <h1 className="text-lg font-bold tracking-wide text-slate-900 dark:text-white">Profile</h1>
+              <div className="flex items-center gap-2">
+                <span className="text-base">🫀</span>
+                <h1 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">Profile Dossier</h1>
+              </div>
               
               {isMe && !editMode ? (
                 <button
                   onClick={() => setEditMode(true)}
-                  className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/50"
+                  className="w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200 bg-[#38bdf8]/10 text-[#38bdf8] hover:bg-[#38bdf8]/20"
                   title="Edit Profile"
                 >
                   <Edit2 className="w-4 h-4" />
@@ -119,30 +141,34 @@ const ProfileModal = ({ user, onClose }) => {
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto custom-scrollbar px-6 pb-8 md:px-8 relative">
               {/* Premium Background Glow */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-48 bg-gradient-to-b from-primary-500/10 to-transparent pointer-events-none" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-48 bg-gradient-to-b from-[#38bdf8]/15 via-[#6366f1]/10 to-transparent pointer-events-none" />
 
               {/* Profile Avatar Section */}
-              <div className="relative flex flex-col items-center gap-4 text-center mt-6">
-                <div
-                  className="w-28 h-28 md:w-24 md:h-24 rounded-full flex items-center justify-center text-5xl md:text-4xl font-bold shadow-xl ring-4 ring-white dark:ring-slate-900 transition-all duration-300 hover:scale-105 relative z-10 overflow-hidden group"
-                  style={{ background: bg, color: fg }}
-                >
-                  {formData.profilepicture ? (
-                    <img src={formData.profilepicture} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    getInitials(user?.full_name)
-                  )}
-                  
-                  {editMode && (
-                    <label className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
-                      <Camera className="w-6 h-6 mb-1" />
-                      <span className="text-[10px] font-bold tracking-wider uppercase">Change</span>
+              <div className="relative flex flex-col items-center gap-4 text-center mt-4">
+                <div className="relative group">
+                  <div
+                    className="w-24 h-24 rounded-3xl flex items-center justify-center text-4xl font-bold shadow-xl ring-4 ring-white dark:ring-[#0c1228] transition-all duration-300 relative z-10 overflow-hidden border border-white/10"
+                    style={!formData.profilepicture ? { background: bg, color: fg } : {}}
+                  >
+                    {formData.profilepicture ? (
+                      <img src={formData.profilepicture} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      getInitials(user?.full_name)
+                    )}
+
+                    {!editMode && user?.isOnline && (
+                      <span className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-[#2dd4bf] border-2 border-white dark:border-[#0c1228] z-10" />
+                    )}
+                  </div>
+
+                  {isMe && (
+                    <label 
+                      title="Upload profile photo"
+                      className="absolute -bottom-1 -right-1 w-8 h-8 rounded-xl bg-gradient-to-tr from-[#6366f1] to-[#38bdf8] text-white flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 active:scale-95 transition-all border-2 border-white dark:border-[#0c1228] z-20"
+                    >
+                      <Camera className="w-4 h-4" />
                       <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
                     </label>
-                  )}
-
-                  {!editMode && user?.isOnline && (
-                    <span className="absolute bottom-1 right-1 w-6 h-6 md:w-5 md:h-5 rounded-full bg-green-500 border-4 border-white dark:border-slate-900" />
                   )}
                 </div>
 
@@ -266,18 +292,18 @@ const ProfileModal = ({ user, onClose }) => {
                   <>
                     <button
                       onClick={() => setEditMode(false)}
-                      className="flex-1 py-3.5 rounded-xl font-bold transition-all duration-200 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                      className="flex-1 py-3.5 rounded-2xl font-bold transition-all duration-200 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-sm"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleSave}
                       disabled={saving}
-                      className="flex-1 py-3.5 rounded-xl font-bold transition-all duration-200 bg-primary-500 text-white hover:bg-primary-600 shadow-lg shadow-primary-500/30 flex items-center justify-center gap-2 disabled:opacity-70"
+                      className="flex-1 py-3.5 rounded-2xl font-bold transition-all duration-200 bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-white shadow-[0_0_20px_rgba(45,212,191,0.35)] hover:opacity-95 flex items-center justify-center gap-2 disabled:opacity-70 text-sm"
                     >
                       {saving ? "Saving..." : (
                         <>
-                          <Check className="w-5 h-5" /> Save Profile
+                          <Check className="w-4 h-4" /> Save Profile
                         </>
                       )}
                     </button>
@@ -285,19 +311,19 @@ const ProfileModal = ({ user, onClose }) => {
                 ) : (
                   <>
                     {!isMe && (
-                      <div className="flex w-full gap-2">
+                      <div className="flex w-full gap-2.5">
                         <button
                           onClick={handleBlockUser}
-                          className="w-14 py-4 rounded-xl font-bold transition-all duration-200 bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 flex items-center justify-center"
-                          title="Block User"
+                          className="w-14 py-3.5 rounded-2xl font-bold transition-all duration-200 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border border-rose-500/20 flex items-center justify-center"
+                          title="Block Contact"
                         >
                           <ShieldBan className="w-5 h-5" />
                         </button>
                         <button
                           onClick={onClose}
-                          className="flex-1 py-4 rounded-xl font-bold transition-all duration-200 bg-primary-500 text-white hover:bg-primary-600 shadow-xl shadow-primary-500/30 flex items-center justify-center gap-2"
+                          className="flex-1 py-3.5 rounded-2xl font-bold transition-all duration-200 bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-white shadow-[0_0_20px_rgba(45,212,191,0.35)] hover:opacity-95 flex items-center justify-center gap-2 text-sm"
                         >
-                          <MessageSquare className="w-5 h-5" />
+                          <MessageSquare className="w-4 h-4" />
                           Send Message
                         </button>
                       </div>
