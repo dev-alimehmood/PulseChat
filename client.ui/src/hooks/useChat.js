@@ -3,8 +3,9 @@ import api from "../services/api";
 import { useAuth } from "../context/auth";
 import { useSocket } from "./useSocket";
 import { toast } from "react-toastify";
+import { playInChatSound, playAlertSound } from "../utils/notificationSound";
 
-export const useChat = (selectedChatId = null) => { // ✅ accepts selectedChatId
+export const useChat = (selectedChatId = null, onSelectChat = null) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [Auth] = useAuth();
@@ -12,34 +13,93 @@ export const useChat = (selectedChatId = null) => { // ✅ accepts selectedChatI
   const loggedInUserId = Auth?.User?._id;
 
   const loggedInUserIdRef = useRef(loggedInUserId);
-  const selectedChatIdRef = useRef(selectedChatId); // ✅ ref for socket handler
+  const selectedChatIdRef = useRef(selectedChatId);
+  const onSelectChatRef = useRef(onSelectChat);
+  const notifiedMessagesRef = useRef(new Set()); // Deduplication set
 
   useEffect(() => {
     loggedInUserIdRef.current = loggedInUserId;
   }, [loggedInUserId]);
 
   useEffect(() => {
-    selectedChatIdRef.current = selectedChatId; // ✅ always fresh in socket handler
-    
+    onSelectChatRef.current = onSelectChat;
+  }, [onSelectChat]);
+
+  // Synchronize active chat state and window focus with Service Worker
+  useEffect(() => {
+    selectedChatIdRef.current = selectedChatId;
+
+    const syncStateWithSW = () => {
+      if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: "CHAT_ACTIVE_STATE",
+          conversationId: selectedChatId ? String(selectedChatId) : null,
+          isFocused: typeof document !== "undefined" && document.hasFocus(),
+          isVisible: typeof document !== "undefined" && !document.hidden,
+        });
+      }
+    };
+
+    syncStateWithSW();
+
     // Auto-close desktop notifications for this chat when we open it
     if (selectedChatId && "serviceWorker" in navigator) {
       navigator.serviceWorker.ready.then((registration) => {
-        registration.getNotifications({ tag: selectedChatId }).then((notifications) => {
-          notifications.forEach((n) => n.close());
+        registration.getNotifications().then((notifications) => {
+          notifications.forEach((n) => {
+            const nConvId = n.data?.conversationId || (n.tag && n.tag.replace("pulse-conv-", ""));
+            if (String(nConvId) === String(selectedChatId)) {
+              n.close();
+            }
+          });
         });
       });
     }
+
+    window.addEventListener("focus", syncStateWithSW);
+    window.addEventListener("blur", syncStateWithSW);
+    document.addEventListener("visibilitychange", syncStateWithSW);
+
+    return () => {
+      window.removeEventListener("focus", syncStateWithSW);
+      window.removeEventListener("blur", syncStateWithSW);
+      document.removeEventListener("visibilitychange", syncStateWithSW);
+    };
   }, [selectedChatId]);
+
+  // Listen for sync messages from Service Worker
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+
+    const handleSWMessage = (event) => {
+      const data = event.data;
+      if (!data) return;
+
+      if (data.type === "IN_CHAT_PUSH_SYNC") {
+        const msgIdStr = data.messageId ? String(data.messageId) : null;
+        if (msgIdStr && !notifiedMessagesRef.current.has(msgIdStr)) {
+          notifiedMessagesRef.current.add(msgIdStr);
+          playInChatSound();
+        }
+      }
+    };
+
+    navigator.serviceWorker.addEventListener("message", handleSWMessage);
+    return () => {
+      navigator.serviceWorker.removeEventListener("message", handleSWMessage);
+    };
+  }, []);
 
   const fetchConversations = useCallback(async () => {
     if (!loggedInUserId) return;
     setLoading(true);
     try {
       const { data } = await api.get(`/conversations/${loggedInUserId}`);
+      const list = Array.isArray(data) ? data : [];
 
-      const formatted = data.map((conv) => {
+      const formatted = list.map((conv) => {
         const lastMsg = conv.lastMessage || null;
-        const isMyLastMsg = String(lastMsg?.sender?._id) === String(loggedInUserId);
+        const isMyLastMsg = String(lastMsg?.sender?._id || lastMsg?.sender) === String(loggedInUserId);
         const unread = lastMsg && !isMyLastMsg
           ? conv.unreadCount?.[loggedInUserId] || 0
           : 0;
@@ -52,6 +112,7 @@ export const useChat = (selectedChatId = null) => { // ✅ accepts selectedChatI
             full_name: conv.user?.full_name || "Unknown",
             isOnline: conv.user?.isOnline || false,
             avatar: conv.user?.profilepicture || null,
+            profilepicture: conv.user?.profilepicture || null,
             lastSeen: conv.user?.lastSeen || null,
             email: conv.user?.email,
             createdAt: conv.user?.createdAt,
@@ -81,58 +142,102 @@ export const useChat = (selectedChatId = null) => { // ✅ accepts selectedChatI
   useEffect(() => {
     if (loggedInUserId) {
       fetchConversations();
-      // Ask user for permission to send desktop notifications
       if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
         Notification.requestPermission();
       }
     }
   }, [loggedInUserId, fetchConversations]);
 
+  // Socket listeners with production-grade notification & deduplication logic
   useEffect(() => {
     if (!socket) return;
 
     const handleNewMessage = (msg) => {
-      setConversations((prev) => {
-        const isFromOther = String(msg.sender?._id) !== String(loggedInUserIdRef.current);
-        const isCurrentlyOpen = String(msg.conversationId) === String(selectedChatIdRef.current);
+      const senderId = typeof msg.sender === "object" ? msg.sender?._id : msg.sender;
+      const isFromOther = String(senderId) !== String(loggedInUserIdRef.current);
+      const isCurrentlyOpen = String(msg.conversationId) === String(selectedChatIdRef.current);
+      const isWindowFocused = typeof document !== "undefined" && document.hasFocus() && !document.hidden;
 
-        if (isFromOther && !isCurrentlyOpen) {
-          const conv = prev.find((c) => String(c._id) === String(msg.conversationId));
-          const senderName = conv?.user?.full_name || conv?.user?.name || "Someone";
-
-          // Play notification sound
-          try {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // 800Hz beep
-            
-            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); 
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-            
-            oscillator.start(audioCtx.currentTime);
-            oscillator.stop(audioCtx.currentTime + 0.5);
-          } catch (e) {
-            console.log("Audio play failed:", e);
+      // Deduplication check
+      const msgIdStr = msg._id ? String(msg._id) : null;
+      let isDuplicate = false;
+      if (msgIdStr) {
+        if (notifiedMessagesRef.current.has(msgIdStr)) {
+          isDuplicate = true;
+        } else {
+          notifiedMessagesRef.current.add(msgIdStr);
+          // Prune old entries to prevent unbounded memory growth
+          if (notifiedMessagesRef.current.size > 250) {
+            const arr = Array.from(notifiedMessagesRef.current);
+            for (let i = 0; i < 75; i++) {
+              notifiedMessagesRef.current.delete(arr[i]);
+            }
           }
+        }
 
-          // 1. Always show an in-app popup (if user is looking at another page/chat)
-          toast.info(`New message from ${senderName}: ${msg.text}`, {
-            position: "top-right",
-            autoClose: 4000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            theme: "colored",
+        // Inform Service Worker that this message was handled by the active tab
+        if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: "MESSAGE_HANDLED",
+            messageId: msgIdStr,
+            conversationId: msg.conversationId,
           });
+        }
+      }
 
-          // (Native notifications are now entirely handled by service-worker.js via Web Push)
+      setConversations((prev) => {
+        // Find corresponding conversation
+        const targetConv = prev.find((c) => String(c._id) === String(msg.conversationId));
+        const senderName = targetConv?.user?.full_name || targetConv?.user?.name || "Someone";
+        const messagePreview = msg.text || (msg.image ? "📷 Photo" : (msg.audioUrl ? "🎤 Voice Note" : "New message"));
+
+        // ONLY recipient receives notifications, never the sender
+        if (isFromOther && !isDuplicate) {
+          if (isCurrentlyOpen && isWindowFocused) {
+            // ✅ User is ONLINE and ACTIVELY IN THE CHAT:
+            // Play gentle in-chat chime, DO NOT show popup or desktop notification!
+            playInChatSound();
+          } else {
+            // ✅ User is in another conversation, looking at another page, or tab is minimized/blurred:
+            playAlertSound();
+
+            if (isWindowFocused) {
+              // Show polished in-app toast
+              toast.info(`💬 ${senderName}: ${messagePreview}`, {
+                position: "top-right",
+                autoClose: 4000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                theme: "colored",
+                onClick: () => {
+                  if (onSelectChatRef.current && targetConv) {
+                    onSelectChatRef.current(targetConv);
+                  }
+                },
+              });
+            } else {
+              // Tab is in background / minimized -> Show native desktop alert via SW registration
+              if ("serviceWorker" in navigator && Notification.permission === "granted") {
+                navigator.serviceWorker.ready.then((reg) => {
+                  reg.showNotification(senderName, {
+                    body: messagePreview,
+                    icon: targetConv?.user?.profilepicture || "/favicon.png",
+                    badge: "/favicon.png",
+                    tag: `pulse-msg-${msg._id}`,
+                    renotify: true,
+                    vibrate: [200, 100, 200],
+                    data: {
+                      url: `/chatpage?chat=${msg.conversationId}`,
+                      conversationId: msg.conversationId,
+                      messageId: msg._id,
+                    },
+                  });
+                });
+              }
+            }
+          }
         }
 
         return prev
@@ -151,7 +256,7 @@ export const useChat = (selectedChatId = null) => { // ✅ accepts selectedChatI
                 isDeleted: msg.isDeleted,
                 isSystem: msg.isSystem,
               },
-              unread: isFromOther && !isCurrentlyOpen
+              unread: isFromOther && (!isCurrentlyOpen || !isWindowFocused)
                 ? (conv.unread || 0) + 1
                 : conv.unread,
             };
@@ -234,8 +339,8 @@ export const useChat = (selectedChatId = null) => { // ✅ accepts selectedChatI
               lastMessage: {
                 ...conv.lastMessage,
                 isDeleted: true,
-                text: ""
-              }
+                text: "",
+              },
             };
           }
           return conv;

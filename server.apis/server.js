@@ -127,6 +127,7 @@ import messageRoutes from "./routes/message.Routes.js";
 import conversationRoutes from "./routes/conversation.Routes.js";
 import userRoutes from "./routes/cuser.Routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import inviteRoutes from "./routes/invite.routes.js";
 
 // models
 import User from "./models/user.models.js";
@@ -142,7 +143,41 @@ const io = new Server(httpServer, {
   },
 });
 
-const onlineUsers = new Map(); // userId -> socketId
+// Multi-device & multi-tab socket management
+const userSocketsMap = new Map(); // userId -> Set of socketIds
+
+const onlineUsers = {
+  get(userId) {
+    if (!userId) return undefined;
+    const strId = userId.toString();
+    const sockets = userSocketsMap.get(strId);
+    if (sockets && sockets.size > 0) {
+      return `user:${strId}`;
+    }
+    return undefined;
+  },
+  has(userId) {
+    if (!userId) return false;
+    const strId = userId.toString();
+    const sockets = userSocketsMap.get(strId);
+    return Boolean(sockets && sockets.size > 0);
+  },
+  set(userId, socketId) {
+    if (!userId) return;
+    const strId = userId.toString();
+    if (!userSocketsMap.has(strId)) {
+      userSocketsMap.set(strId, new Set());
+    }
+    userSocketsMap.get(strId).add(socketId);
+  },
+  delete(userId) {
+    if (!userId) return;
+    userSocketsMap.delete(userId.toString());
+  },
+  entries() {
+    return userSocketsMap.entries();
+  },
+};
 
 io.on("connection", (socket) => {
   console.log("🟢 Socket connected:", socket.id);
@@ -150,32 +185,40 @@ io.on("connection", (socket) => {
   // ================= USER ONLINE =================
   socket.on("userOnline", async (userId) => {
     if (!userId) return;
+    const strId = userId.toString();
+    socket.userId = strId;
+    socket.join(`user:${strId}`);
 
-    onlineUsers.set(userId, socket.id);
+    const isFirstConnection = !userSocketsMap.has(strId) || userSocketsMap.get(strId).size === 0;
+    if (!userSocketsMap.has(strId)) {
+      userSocketsMap.set(strId, new Set());
+    }
+    userSocketsMap.get(strId).add(socket.id);
 
-    await User.findByIdAndUpdate(userId, {
-      isOnline: true,
-      lastSeen: new Date(),
-    });
+    if (isFirstConnection) {
+      await User.findByIdAndUpdate(userId, {
+        isOnline: true,
+        lastSeen: new Date(),
+      });
 
-    io.emit("userStatusChanged", {
-      userId,
-      isOnline: true,
-    });
+      io.emit("userStatusChanged", {
+        userId: strId,
+        isOnline: true,
+      });
+    }
   });
 
   // ================= SEND MESSAGE =================
   socket.on("sendMessage", (message) => {
-    // message: { conversationId, senderId, receiverId, text }
+    if (!message || !message.receiverId) return;
+    const receiverRoom = onlineUsers.get(message.receiverId);
 
-    const receiverSocket = onlineUsers.get(message.receiverId);
-
-    // send to receiver instantly
-    if (receiverSocket) {
-      io.to(receiverSocket).emit("newMessage", message);
+    // send to receiver instantly across all their devices/tabs
+    if (receiverRoom) {
+      io.to(receiverRoom).emit("newMessage", message);
     }
 
-    // also update sender side (optional sync)
+    // also sync sender side
     socket.emit("messageSent", message);
 
     // update chat list instantly
@@ -187,44 +230,41 @@ io.on("connection", (socket) => {
 
   // ================= TYPING =================
   socket.on("typing", ({ receiverId, conversationId }) => {
-    const receiverSocket = onlineUsers.get(receiverId);
-    if (receiverSocket) {
-      io.to(receiverSocket).emit("typing", { conversationId });
+    const receiverRoom = onlineUsers.get(receiverId);
+    if (receiverRoom) {
+      io.to(receiverRoom).emit("typing", { conversationId });
     }
   });
 
   socket.on("stopTyping", ({ receiverId, conversationId }) => {
-    const receiverSocket = onlineUsers.get(receiverId);
-    if (receiverSocket) {
-      io.to(receiverSocket).emit("stopTyping", { conversationId });
+    const receiverRoom = onlineUsers.get(receiverId);
+    if (receiverRoom) {
+      io.to(receiverRoom).emit("stopTyping", { conversationId });
     }
   });
 
   // ================= DISCONNECT =================
   socket.on("disconnect", async () => {
-    let userId = null;
+    const userId = socket.userId;
+    if (userId && userSocketsMap.has(userId)) {
+      const sockets = userSocketsMap.get(userId);
+      sockets.delete(socket.id);
 
-    for (let [uid, sid] of onlineUsers.entries()) {
-      if (sid === socket.id) {
-        userId = uid;
-        onlineUsers.delete(uid);
-        break;
+      if (sockets.size === 0) {
+        userSocketsMap.delete(userId);
+        const lastSeen = new Date();
+
+        await User.findByIdAndUpdate(userId, {
+          isOnline: false,
+          lastSeen,
+        });
+
+        io.emit("userStatusChanged", {
+          userId,
+          isOnline: false,
+          lastSeen,
+        });
       }
-    }
-
-    if (userId) {
-      const lastSeen = new Date();
-
-      await User.findByIdAndUpdate(userId, {
-        isOnline: false,
-        lastSeen,
-      });
-
-      io.emit("userStatusChanged", {
-        userId,
-        isOnline: false,
-        lastSeen,
-      });
     }
 
     console.log("🔴 Socket disconnected:", socket.id);
@@ -251,6 +291,7 @@ app.use("/api/v1/messages", messageRoutes);
 app.use("/api/v1/conversations", conversationRoutes);
 app.use("/api/v1/cusers", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/invites", inviteRoutes);
 
 // ================= START SERVER =================
 const PORT = process.env.PORT || 5000;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Search } from "lucide-react";
 import { getInitials, avatarColor } from "../../utils/chat";
+import Avatar from "../shared/Avatar";
 import { useAuth } from "../../context/auth";
 import api from "../../services/api";
 
@@ -71,12 +72,14 @@ const ForwardModal = ({ isOpen, onClose, onForward }) => {
                   }}
                   className="flex items-center gap-3.5 p-3 hover:bg-gradient-to-r hover:from-[#6366f1]/10 hover:to-[#38bdf8]/10 rounded-2xl cursor-pointer transition-all border border-transparent hover:border-[#38bdf8]/30 mb-1"
                 >
-                  <div
-                    className="w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-bold flex-shrink-0 border border-white/10"
-                    style={{ background: bg, color: fg }}
-                  >
-                    {getInitials(conv.user?.full_name || conv.user?.name)}
-                  </div>
+                  <Avatar
+                    src={conv.user?.profilepicture || conv.user?.avatar}
+                    name={conv.user?.full_name || conv.user?.name}
+                    id={conv.user?._id || conv.user?.id}
+                    size="w-10 h-10 text-xs"
+                    rounded="rounded-2xl"
+                    className="border border-white/10"
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                       {conv.user?.full_name || conv.user?.name || "Unknown"}

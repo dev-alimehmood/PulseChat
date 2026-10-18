@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/auth";
+import Avatar from "../../components/shared/Avatar";
 import { Baseurl } from "../../config/apis";
 import { toast } from "react-toastify";
 import { Activity, Clock, ShieldBan, User, MessageSquare, CheckCircle, ArrowRight, Sparkles, ShieldCheck, BellRing, Search, Star, TrendingUp, MessageCircleMore, Lock, LayoutDashboard, MessageSquarePlus, Settings, MoonStar, SunMedium, ChevronRight, BarChart3 } from "lucide-react";
@@ -104,15 +105,14 @@ const UserDashboard = () => {
           <div className={`rounded-[2rem] border p-6 shadow-[0_20px_70px_rgba(15,23,42,0.08)] backdrop-blur-xl md:p-8 ${isProMode ? "border-slate-800/80 bg-slate-900/80" : "border-slate-200/80 bg-white/80"}`}>
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-start gap-4">
-                <div className="relative h-16 w-16 shrink-0 rounded-2xl border border-slate-200 bg-gradient-to-br from-primary-500 to-blue-600 p-[2px] shadow-lg dark:border-slate-800">
-                  <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[14px] bg-white dark:bg-slate-950">
-                    {auth?.User?.profilepicture ? (
-                      <img src={auth.User.profilepicture} alt="Profile" className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="text-xl font-semibold text-primary-600">{auth?.User?.full_name?.charAt(0) || "U"}</span>
-                    )}
-                  </div>
-                </div>
+                <Avatar
+                  src={auth?.User?.profilepicture}
+                  name={auth?.User?.full_name}
+                  id={auth?.User?._id}
+                  size="w-16 h-16 text-xl"
+                  rounded="rounded-2xl"
+                  className="shadow-lg border border-slate-200 dark:border-slate-800"
+                />
                 <div>
                   <p className={`text-sm font-semibold uppercase tracking-[0.24em] ${isProMode ? "text-slate-400" : "text-slate-500"}`}>Dashboard</p>
                   <h1 className={`text-2xl font-semibold tracking-tight sm:text-3xl ${isProMode ? "text-white" : "text-slate-900"}`}>
@@ -237,9 +237,13 @@ const UserDashboard = () => {
                   stats.blockedUsers.map((user) => (
                     <div key={user._id} className={`flex items-center justify-between rounded-[1.25rem] border px-3 py-3 ${isProMode ? "border-slate-800 bg-slate-800/70" : "border-slate-200 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-800/70"}`}>
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                          {user.profilepicture ? <img src={user.profilepicture} alt="" className="h-full w-full object-cover" /> : <span className="text-sm font-semibold text-slate-600">{user.full_name?.charAt(0) || "?"}</span>}
-                        </div>
+                        <Avatar
+                          src={user.profilepicture}
+                          name={user.full_name}
+                          id={user._id}
+                          size="w-10 h-10 text-xs"
+                          rounded="rounded-full"
+                        />
                         <div>
                           <p className="font-semibold text-slate-900 dark:text-white">{user.full_name}</p>
                           <p className="text-xs text-slate-500 dark:text-slate-400">Paused from messaging</p>

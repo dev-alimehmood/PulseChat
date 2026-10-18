@@ -1,20 +1,79 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/auth";
 import ChatList from "../components/chat/ChatList";
 import ChatWindow from "../components/chat/ChatWindow";
 import NewChatModal from "../components/newChat/NewChatModal";
+import InviteModal from "../components/invite/InviteModal";
 import api from "../services/api";
 import { useChat } from "../hooks/useChat";
+import ErrorBoundary from "../components/shared/ErrorBoundary";
 
 const Chatpage = ({ toggleDark }) => {
   const [Auth] = useAuth();
   const [selectedChat, setSelectedChat] = useState(null);
   const [showNewChat, setShowNewChat] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteInitialEmail, setInviteInitialEmail] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [activeTab, setActiveTab] = useState("Chats");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const chatParam = searchParams.get("chat");
+  const handleSelectChatRef = useRef(null);
+
+  const onSelectChatCallback = useCallback((conv) => {
+    if (handleSelectChatRef.current) {
+      handleSelectChatRef.current(conv);
+    }
+  }, []);
 
   // single source of truth — useChat only here
-  const { conversations, loading, refetch, resetUnread } = useChat(selectedChat?._id);
+  const { conversations, loading, refetch, resetUnread } = useChat(selectedChat?._id, onSelectChatCallback);
+
+  const handleSelectChat = useCallback((conv) => {
+    if (!conv) return;
+    setSelectedChat(conv);
+    if (conv._id && typeof resetUnread === "function") {
+      resetUnread(conv._id);
+    }
+  }, [resetUnread]);
+
+  handleSelectChatRef.current = handleSelectChat;
+
+  // Auto-open chat from URL query parameter only once on initial load
+  const autoOpenedRef = useRef(false);
+  useEffect(() => {
+    if (autoOpenedRef.current || !chatParam || conversations.length === 0) return;
+    const match = conversations.find((c) => String(c._id) === String(chatParam));
+    if (match) {
+      autoOpenedRef.current = true;
+      setSelectedChat(match);
+      if (typeof resetUnread === "function") {
+        resetUnread(match._id);
+      }
+    }
+  }, [chatParam, conversations, resetUnread]);
+
+  // Listen for navigation events from Service Worker notification clicks
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+
+    const handleSWMessage = (event) => {
+      const data = event.data;
+      if (data?.type === "NAVIGATE_CHAT" && data?.conversationId) {
+        const targetConvId = String(data.conversationId);
+        const match = conversations.find((c) => String(c._id) === targetConvId);
+        if (match) {
+          handleSelectChat(match);
+        }
+      }
+    };
+
+    navigator.serviceWorker.addEventListener("message", handleSWMessage);
+    return () => {
+      navigator.serviceWorker.removeEventListener("message", handleSWMessage);
+    };
+  }, [conversations, handleSelectChat]);
 
   // Lock window scroll to top when mounting Chatpage
   useEffect(() => {
@@ -22,11 +81,6 @@ const Chatpage = ({ toggleDark }) => {
     document.body.scrollTop = 0;
     document.documentElement.scrollTop = 0;
   }, []);
-
-  const handleSelectChat = (conv) => {
-    setSelectedChat(conv);
-    resetUnread(conv._id); // reset unread badge immediately
-  };
 
   useEffect(() => {
     if (!selectedUser) return;
@@ -49,6 +103,7 @@ const Chatpage = ({ toggleDark }) => {
             name: selectedUser.full_name || "Unknown",
             email: selectedUser.email,
             avatar: selectedUser.profilepicture,
+            profilepicture: selectedUser.profilepicture,
             isOnline: selectedUser.isOnline || false,
             lastSeen: selectedUser.lastSeen || null,
           },
@@ -124,12 +179,14 @@ const Chatpage = ({ toggleDark }) => {
               !selectedChat ? 'hidden md:flex' : 'flex'
             }`}
           >
-            <ChatWindow
-              conversation={selectedChat}
-              onUserStatusChange={handleUserStatusChange}
-              onBack={() => setSelectedChat(null)}
-              openNewChat={() => setShowNewChat(true)}
-            />
+            <ErrorBoundary onReset={() => setSelectedChat(null)} title="Conversation Error">
+              <ChatWindow
+                conversation={selectedChat}
+                onUserStatusChange={handleUserStatusChange}
+                onBack={() => setSelectedChat(null)}
+                openNewChat={() => setShowNewChat(true)}
+              />
+            </ErrorBoundary>
           </div>
         </>
       ) : null}
@@ -138,6 +195,21 @@ const Chatpage = ({ toggleDark }) => {
         <NewChatModal
           onSelectUser={setSelectedUser}
           onClose={() => setShowNewChat(false)}
+          onOpenInvite={(email) => {
+            setInviteInitialEmail(email || "");
+            setShowInviteModal(true);
+          }}
+        />
+      )}
+
+      {showInviteModal && (
+        <InviteModal
+          isOpen={showInviteModal}
+          onClose={() => setShowInviteModal(false)}
+          initialEmail={inviteInitialEmail}
+          onOpenChatWithUser={(user) => {
+            setSelectedUser(user);
+          }}
         />
       )}
     </div>

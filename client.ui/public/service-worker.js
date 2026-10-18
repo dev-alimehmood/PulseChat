@@ -1,35 +1,133 @@
+// Production-grade Service Worker for PulseChat Notifications
+// Handles immediate push notifications across Desktop & Mobile, online & offline states,
+// with context-aware suppression when actively inside a chat, and strict deduplication.
+
+const activeClientsMap = new Map(); // clientId -> { conversationId, isFocused, isVisible, lastUpdated }
+const handledMessages = new Set(); // messageId set to avoid duplicate notifications
+
+function pruneHandledMessages() {
+  if (handledMessages.size > 250) {
+    const arr = Array.from(handledMessages);
+    for (let i = 0; i < 75; i++) {
+      handledMessages.delete(arr[i]);
+    }
+  }
+}
+
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(clients.claim());
+});
+
+// Client communication: sync active conversation and focus state
+self.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || typeof data !== "object") return;
+
+  if (data.type === "CHAT_ACTIVE_STATE") {
+    if (event.source && event.source.id) {
+      activeClientsMap.set(event.source.id, {
+        conversationId: data.conversationId ? String(data.conversationId) : null,
+        isFocused: Boolean(data.isFocused),
+        isVisible: Boolean(data.isVisible),
+        lastUpdated: Date.now(),
+      });
+    }
+  } else if (data.type === "MESSAGE_HANDLED") {
+    if (data.messageId) {
+      handledMessages.add(String(data.messageId));
+      pruneHandledMessages();
+    }
+  } else if (data.type === "CLIENT_UNLOAD") {
+    if (event.source && event.source.id) {
+      activeClientsMap.delete(event.source.id);
+    }
+  }
+});
+
+// Immediate push delivery
 self.addEventListener("push", (event) => {
   if (!event.data) return;
-  
+
   try {
     const data = event.data.json();
-    
-    const options = {
-      body: data.body,
-      icon: data.icon || "/favicon.png",
-      badge: "/favicon.png",
-      vibrate: [100, 50, 100],
-      tag: data.conversationId,
-      data: {
-        url: data.url || "/",
-        conversationId: data.conversationId,
-      },
-    };
+    const msgId = data.messageId ? String(data.messageId) : null;
+    const convId = data.conversationId ? String(data.conversationId) : null;
+
+    // Strict deduplication: skip if already handled/notified
+    if (msgId && handledMessages.has(msgId)) {
+      return;
+    }
+    if (msgId) {
+      handledMessages.add(msgId);
+      pruneHandledMessages();
+    }
 
     event.waitUntil(
       clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
-        let isFocused = false;
-        for (let i = 0; i < windowClients.length; i++) {
-          if (windowClients[i].focused) {
-            isFocused = true;
+        // Clean stale client records
+        const activeIds = new Set(windowClients.map((c) => c.id));
+        for (const [id] of activeClientsMap.entries()) {
+          if (!activeIds.has(id)) {
+            activeClientsMap.delete(id);
+          }
+        }
+
+        // Determine if user is online, active, and looking at THIS specific conversation
+        let isActivelyViewingThisChat = false;
+
+        for (const client of windowClients) {
+          const clientState = activeClientsMap.get(client.id);
+          const isFocused = client.focused || (clientState && clientState.isFocused);
+          const isViewingThisConv = clientState && clientState.conversationId === convId;
+          const urlMatches = client.url && convId && client.url.includes(`chat=${convId}`);
+
+          if (isFocused && (isViewingThisConv || urlMatches)) {
+            isActivelyViewingThisChat = true;
+
+            // Notify client for in-chat sync
+            try {
+              client.postMessage({
+                type: "IN_CHAT_PUSH_SYNC",
+                conversationId: convId,
+                messageId: msgId,
+                data,
+              });
+            } catch (e) {
+              // Ignore postMessage failure
+            }
             break;
           }
         }
 
-        // Only show notification if the user isn't actively looking at the app
-        if (!isFocused) {
-          return self.registration.showNotification(data.title, options);
+        // REQUIREMENT: If user is online and inside the active chat, suppress system popup!
+        if (isActivelyViewingThisChat) {
+          return;
         }
+
+        // REQUIREMENT: Out of chat, backgrounded tab, screen locked, mobile, or offline -> Show notification immediately!
+        const notificationTag = msgId ? `pulse-msg-${msgId}` : `pulse-conv-${convId || "general"}`;
+        const targetUrl = data.url || (convId ? `/chatpage?chat=${convId}` : "/chatpage");
+
+        const options = {
+          body: data.body || "New message received",
+          icon: data.icon || "/favicon.png",
+          badge: "/favicon.png",
+          tag: notificationTag,
+          renotify: true,
+          requireInteraction: false,
+          vibrate: [200, 100, 200],
+          data: {
+            url: targetUrl,
+            conversationId: convId,
+            messageId: msgId,
+          },
+        };
+
+        return self.registration.showNotification(data.title || "PulseChat", options);
       })
     );
   } catch (err) {
@@ -37,23 +135,35 @@ self.addEventListener("push", (event) => {
   }
 });
 
+// User clicks notification: focus tab and navigate directly to conversation
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  
-  const urlToOpen = event.notification.data?.url || "/";
-  
+
+  const convId = event.notification.data?.conversationId;
+  const targetUrl = event.notification.data?.url || (convId ? `/chatpage?chat=${convId}` : "/chatpage");
+
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
-      // Check if there is already a window/tab open with the target URL
-      for (let i = 0; i < windowClients.length; i++) {
-        const client = windowClients[i];
-        if (client.url.includes(urlToOpen) && "focus" in client) {
-          return client.focus();
+      // 1. If an existing PulseChat window is open, focus it and open the chat
+      for (const client of windowClients) {
+        if ("focus" in client) {
+          return client.focus().then(() => {
+            if (convId) {
+              client.postMessage({
+                type: "NAVIGATE_CHAT",
+                conversationId: convId,
+              });
+            }
+            if (!client.url.includes("/chatpage")) {
+              return client.navigate(targetUrl);
+            }
+          });
         }
       }
-      // If not open, open a new tab
+
+      // 2. If no window open, open fresh window
       if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
+        return clients.openWindow(targetUrl);
       }
     })
   );

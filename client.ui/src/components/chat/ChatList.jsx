@@ -17,12 +17,13 @@ const ChatList = ({
 
   const totalUnread = conversations.reduce((acc, c) => acc + (c.unread || 0), 0);
 
-  const filtered = conversations.filter((conv) => {
-    const matchesSearch = conv.user?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      conv.user?.full_name?.toLowerCase().includes(search.toLowerCase());
+  const filtered = (conversations || []).filter((conv) => {
+    if (!conv) return false;
+    const userName = (conv.user?.name || conv.user?.full_name || "").toLowerCase();
+    const matchesSearch = !search.trim() || userName.includes(search.toLowerCase().trim());
     
     if (activeFilter === "unread") {
-      return matchesSearch && (conv.unread > 0);
+      return matchesSearch && ((conv.unread || 0) > 0);
     }
     return matchesSearch;
   });

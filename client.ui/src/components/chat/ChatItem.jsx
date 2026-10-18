@@ -1,5 +1,6 @@
 import { useAuth } from "../../context/auth";
 import { getInitials, avatarColor, formatTime, truncate } from "../../utils/chat";
+import Avatar from "../shared/Avatar";
 import { Check, CheckCheck, AlertCircle, Star, Clock } from "lucide-react";
 
 const MessageStatusIcon = ({ status, isMyMessage }) => {
@@ -50,27 +51,20 @@ const ChatItem = ({ conv, isActive, onClick }) => {
       )}
 
       {/* Avatar */}
-      <div
-        className={`relative w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-sm transition-all duration-300 overflow-hidden ${
+      <Avatar
+        src={user?.profilepicture || user?.avatar}
+        name={user?.full_name || user?.name}
+        id={user?._id || user?.id}
+        size="w-12 h-12 text-sm"
+        rounded="rounded-2xl"
+        showOnline={true}
+        isOnline={user?.isOnline}
+        className={`${
           isActive 
             ? 'scale-105 ring-2 ring-[#2dd4bf]/70 shadow-[0_0_15px_rgba(45,212,191,0.35)]' 
             : 'group-hover:scale-105 border border-white/10'
         }`}
-        style={!(user?.profilepicture || user?.avatar) ? { background: bg, color: fg } : {}}
-      >
-        {(user?.profilepicture || user?.avatar) ? (
-          <img 
-            src={user.profilepicture || user.avatar} 
-            alt={user?.full_name || user?.name || "Avatar"} 
-            className="w-full h-full object-cover" 
-          />
-        ) : (
-          getInitials(user?.full_name || user?.name)
-        )}
-        {user?.isOnline && (
-          <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#2dd4bf] ring-2 ring-white dark:ring-[#090d1b] shadow-[0_0_8px_#2dd4bf] z-10" />
-        )}
-      </div>
+      />
 
       {/* Info */}
       <div className="flex-1 min-w-0">

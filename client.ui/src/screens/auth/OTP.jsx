@@ -1,139 +1,173 @@
-import { errortoast, successtoast, warningtoast } from '../../toastify/toastify';
-import React, { useState } from 'react';
-import OtpInput from 'react-otp-input';
-import apis from '../../config/apis';
-import axios from 'axios'
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import OtpInput from "react-otp-input";
+import apis from "../../config/apis";
+import axios from "axios";
 import { motion } from "framer-motion";
-import { MessageSquare, Key } from "lucide-react";
+import { KeyRound, ArrowRight, RefreshCw, CheckCircle2, ShieldAlert } from "lucide-react";
+import { errortoast, successtoast, warningtoast } from "../../toastify/toastify";
+import AuthLayout from "./AuthLayout";
 
 const OTP = () => {
-  
-  const [user, setuser] = useState({
-       otp:""
-  })
+  const navigate = useNavigate();
+  const [user, setUser] = useState({ otp: "" });
   const [loading, setLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(60);
 
-  const Changehandler = (otp) => {
-    setuser({ otp });
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown((prev) => prev - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
+  const changeHandler = (otp) => {
+    setUser({ otp });
   };
 
   const otphandler = async (e) => {
-      e.preventDefault()
-      setLoading(true);
-      try {
-        const {data} = await axios.post(`${apis.auth}/otp`,user)
-        if(data.error){
-          errortoast(data.error)
-        }
-        if(data.warning){
-          warningtoast(data.warning)
-        }
-        if(data.success){
-          setTimeout(() => {
-            location.href=`/resetpassword/${data.success.token}`
-          }, 2000);
-          successtoast(data.success.message)
-        }
-      } catch (err) {
-        errortoast("Verification failed");
-      } finally {
-        setLoading(false);
+    if (e) e.preventDefault();
+    if (!user.otp || user.otp.length < 5) {
+      warningtoast("Please enter all 5 digits of your verification code");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data } = await axios.post(`${apis.auth}/otp`, user);
+      if (data.error) {
+        errortoast(data.error);
       }
-  }
+      if (data.warning) {
+        warningtoast(data.warning);
+      }
+      if (data.success) {
+        successtoast(data.success.message || "OTP verified successfully");
+        const token = data.success.token || "";
+        setTimeout(() => {
+          navigate(`/resetpassword/${token}`);
+        }, 1500);
+      }
+    } catch (err) {
+      console.error("OTP verification error:", err?.response?.data || err.message);
+      errortoast(err?.response?.data?.message || err?.response?.data?.error || "OTP verification failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  return (
-     <div className="min-h-screen flex items-center justify-center p-4">
-      
-      <div className="w-full max-w-5xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-slate-200 dark:border-slate-800 transition-colors duration-500">
-        
-        {/* Left Side: Brand/Graphic */}
-        <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-primary-600 via-primary-500 to-accent-600 p-12 flex-col justify-between text-white relative overflow-hidden">
-          <div className="absolute top-[10%] right-[-10%] w-64 h-64 bg-white/10 rounded-full mix-blend-overlay filter blur-[64px] animate-pulse"></div>
-          <div className="absolute bottom-[-10%] left-[-10%] w-80 h-80 bg-accent-400/20 rounded-full mix-blend-overlay filter blur-[64px] animate-pulse" style={{ animationDelay: "2s" }}></div>
-          
-          <div className="relative z-10 flex items-center gap-3">
-             <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center shadow-lg border border-white/30">
-               <MessageSquare className="w-6 h-6 text-white" />
-             </div>
-             <span className="text-2xl font-bold tracking-wide">PulseChat</span>
+  const otpHeroWidget = (
+    <div className="space-y-3 pt-2">
+      <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl space-y-3 shadow-xl">
+        <div className="flex items-center justify-between pb-1.5 border-b border-white/10">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 text-[#38bdf8]" />
+            <span className="text-xs font-bold text-white tracking-wide">Anti-Tamper Token Validation</span>
           </div>
-
-          <div className="relative z-10 mt-20">
-            <h1 className="text-4xl lg:text-5xl font-bold leading-tight mb-6">
-              Check your <br/> inbox.
-            </h1>
-            <p className="text-primary-100 text-lg max-w-sm">
-              We've sent a 5-digit verification code to your email address.
-            </p>
-          </div>
-
-          <div className="relative z-10 mt-20" />
+          <span className="text-[10px] font-mono text-[#2dd4bf] bg-[#2dd4bf]/10 px-2 py-0.5 rounded-full border border-[#2dd4bf]/20">
+            ENCRYPTED
+          </span>
         </div>
+        
+        <p className="text-xs text-slate-200 leading-relaxed font-normal">
+          Every OTP is matched against your active session hash. Once confirmed, you will be granted immediate access to configure your new password.
+        </p>
 
-        {/* Right Side: Form */}
-        <div className="w-full md:w-1/2 p-8 md:p-12 lg:p-16 flex flex-col justify-center bg-slate-50 dark:bg-slate-900 transition-colors duration-500">
-          
-          <div className="md:hidden flex items-center gap-3 mb-8">
-             <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center shadow-lg">
-               <MessageSquare className="w-5 h-5 text-white" />
-             </div>
-             <span className="text-2xl font-bold text-slate-900 dark:text-white tracking-wide">PulseChat</span>
-          </div>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex flex-col items-center"
-          >
-            <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center mb-6 shadow-inner text-primary-500 dark:text-primary-400">
-              <Key className="w-8 h-8" />
-            </div>
-
-            <div className="text-center mb-10">
-                <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Enter OTP</h2>
-                <p className="text-slate-500 dark:text-slate-400 text-sm">Please enter the One-Time Password sent to your email.</p>
-            </div>
-            
-            <form onSubmit={otphandler} className="w-full space-y-8 flex flex-col items-center">
-
-              {/* otp */}
-              <div className="flex justify-center w-full" dir="ltr">
-                <OtpInput
-                  value={user.otp}
-                  onChange={Changehandler}
-                  numInputs={5}
-                  renderSeparator={<span className="w-2 md:w-4 text-slate-400"></span>}
-                  renderInput={(props) => (
-                    <input 
-                      {...props} 
-                      className="w-12 h-14 md:w-14 md:h-16 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-2xl font-semibold text-center focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all duration-300 shadow-sm" 
-                    />
-                  )}
-                  containerStyle="flex justify-center"
-                />
-              </div>
-              
-              <motion.button 
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
-                disabled={loading || user.otp.length < 5}
-                className="w-full bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 text-white py-3.5 rounded-xl font-semibold shadow-lg shadow-primary-500/30 transition-all duration-300 flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                type='submit'
-              >
-                {loading ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                ) : (
-                    "Verify OTP"
-                )}
-              </motion.button>
-            </form>
-
-          </motion.div>
+        <div className="flex items-center gap-2 text-[11px] text-[#2dd4bf] pt-1">
+          <CheckCircle2 className="w-3.5 h-3.5" /> Direct SSL Handshake
         </div>
       </div>
     </div>
   );
-}
 
-export default OTP
+  return (
+    <AuthLayout
+      badge="🔑 Two-Factor Verification"
+      heroTitle="Validate Your Authorized Session."
+      heroSubtitle="Confirm your identity with the 5-digit verification code sent to your email to safely regain access to your conversations."
+      cardTitle="Enter Verification Code"
+      cardSubtitle="Type in the 5-digit security code dispatched to your registered email address."
+      heroWidget={otpHeroWidget}
+    >
+      <form onSubmit={otphandler} className="space-y-6">
+        
+        {/* Visual Key Emblem */}
+        <div className="flex justify-center">
+          <div className="relative">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#6366f1]/20 via-[#38bdf8]/20 to-[#2dd4bf]/20 border border-[#38bdf8]/40 flex items-center justify-center text-[#38bdf8] shadow-[0_0_25px_rgba(56,189,248,0.25)]">
+              <KeyRound className="w-7 h-7" />
+            </div>
+            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#2dd4bf] animate-ping" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#2dd4bf]" />
+          </div>
+        </div>
+
+        {/* OTP Input Container */}
+        <div className="flex justify-center w-full py-2" dir="ltr">
+          <OtpInput
+            value={user.otp}
+            onChange={changeHandler}
+            numInputs={5}
+            shouldAutoFocus
+            inputType="tel"
+            renderSeparator={<span className="w-2 sm:w-3" />}
+            renderInput={(props) => (
+              <input
+                {...props}
+                className="!w-12 h-14 sm:!w-14 sm:h-16 bg-slate-50 dark:bg-[#0f152d]/90 rounded-2xl border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-2xl font-black font-mono text-center focus:outline-none focus:ring-2 focus:ring-[#38bdf8]/30 focus:border-[#38bdf8] focus:bg-white dark:focus:bg-[#131b3b] transition-all duration-300 shadow-sm"
+              />
+            )}
+            containerStyle="flex justify-center items-center"
+          />
+        </div>
+
+        {/* Action Button */}
+        <motion.button
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.98 }}
+          type="submit"
+          disabled={loading || user.otp.length < 5}
+          className="w-full bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-slate-950 font-bold py-3.5 rounded-2xl shadow-[0_0_25px_rgba(45,212,191,0.35)] hover:shadow-[0_0_40px_rgba(45,212,191,0.55)] transition-all duration-300 flex justify-center items-center gap-2 text-sm disabled:opacity-40 disabled:cursor-not-allowed group cursor-pointer"
+        >
+          {loading ? (
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+              <span>Verifying Code...</span>
+            </div>
+          ) : (
+            <>
+              <span>Verify & Continue</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </>
+          )}
+        </motion.button>
+
+        {/* Resend & Back Navigation */}
+        <div className="pt-4 border-t border-slate-200/80 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+          <div>
+            Didn't receive code?{" "}
+            {resendCooldown > 0 ? (
+              <span className="font-mono text-[#38bdf8]">Resend in {resendCooldown}s</span>
+            ) : (
+              <Link
+                to="/forgetpassword"
+                className="font-bold text-[#38bdf8] hover:text-[#2dd4bf] inline-flex items-center gap-1 transition-colors"
+              >
+                <RefreshCw className="w-3 h-3" /> Resend Code
+              </Link>
+            )}
+          </div>
+
+          <Link
+            to="/login"
+            className="font-bold text-slate-700 dark:text-slate-300 hover:text-[#38bdf8] transition-colors"
+          >
+            Back to Sign In
+          </Link>
+        </div>
+      </form>
+    </AuthLayout>
+  );
+};
+
+export default OTP;

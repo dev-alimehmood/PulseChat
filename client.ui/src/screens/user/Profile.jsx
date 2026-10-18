@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { getInitials, avatarColor } from "../../utils/chat";
+import Avatar from "../../components/shared/Avatar";
 import { 
   ArrowLeft, Edit2, Check, User, MapPin, Phone, Camera, ShieldBan, Save, 
   Trash2, Mail, Calendar, ShieldCheck, Sparkles, Loader2, RefreshCw
@@ -110,15 +111,15 @@ const Profile = () => {
       // Save directly to profile for immediate seamless update
       const updatedFormData = { ...formData, profilepicture: finalUrl };
       const { data } = await api.put("/users/profile", updatedFormData);
-      if (data.success && data.success.user) {
-        setAuth((prev) => ({
-          ...prev,
-          User: { ...prev.User, ...data.success.user }
-        }));
-        localStorage.setItem("user", JSON.stringify({ ...Auth.User, ...data.success.user }));
-        setFormData(updatedFormData);
-        successtoast("Profile picture updated!");
-      }
+      const updatedUser = data?.success?.user || data?.user || { ...Auth.User, ...updatedFormData };
+      setAuth((prev) => ({
+        ...prev,
+        User: { ...prev.User, ...updatedUser }
+      }));
+      localStorage.setItem("user", JSON.stringify({ ...Auth.User, ...updatedUser }));
+      setFormData((prev) => ({ ...prev, profilepicture: updatedUser.profilepicture || finalUrl }));
+      setNewImagePreview(null);
+      successtoast("Profile picture updated!");
     } catch (err) {
       console.error("Failed to process image", err);
       errortoast("Failed to update profile picture");
@@ -133,16 +134,15 @@ const Profile = () => {
     try {
       const updatedFormData = { ...formData, profilepicture: "" };
       const { data } = await api.put("/users/profile", updatedFormData);
-      if (data.success && data.success.user) {
-        setAuth((prev) => ({
-          ...prev,
-          User: { ...prev.User, ...data.success.user, profilepicture: "" }
-        }));
-        localStorage.setItem("user", JSON.stringify({ ...Auth.User, ...data.success.user, profilepicture: "" }));
-        setFormData(updatedFormData);
-        setNewImagePreview(null);
-        successtoast("Profile picture removed");
-      }
+      const updatedUser = data?.success?.user || data?.user || { ...Auth.User, ...updatedFormData };
+      setAuth((prev) => ({
+        ...prev,
+        User: { ...prev.User, ...updatedUser, profilepicture: "" }
+      }));
+      localStorage.setItem("user", JSON.stringify({ ...Auth.User, ...updatedUser, profilepicture: "" }));
+      setFormData((prev) => ({ ...prev, profilepicture: "" }));
+      setNewImagePreview(null);
+      successtoast("Profile picture removed");
     } catch (err) {
       errortoast("Failed to remove profile picture");
     } finally {
@@ -229,22 +229,18 @@ const Profile = () => {
             
             {/* Avatar with Camera Trigger */}
             <div className="relative group shrink-0">
-              <div
-                className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl flex items-center justify-center text-4xl sm:text-5xl font-bold shadow-2xl ring-4 ring-slate-100 dark:ring-[#07090e] overflow-hidden border border-white/20 transition-all relative"
-                style={!currentDisplayPhoto ? { background: bg, color: fg } : {}}
-              >
-                {currentDisplayPhoto ? (
-                  <img 
-                    src={currentDisplayPhoto} 
-                    alt="Profile" 
-                    className="w-full h-full object-cover" 
-                  />
-                ) : (
-                  getInitials(user?.full_name)
-                )}
+              <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl shadow-2xl ring-4 ring-slate-100 dark:ring-[#07090e] overflow-hidden border border-white/20">
+                <Avatar
+                  src={currentDisplayPhoto}
+                  name={user?.full_name}
+                  id={user?._id}
+                  size="w-full h-full text-4xl sm:text-5xl"
+                  rounded="rounded-3xl"
+                  alt="Profile"
+                />
 
                 {uploadingPhoto && (
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white backdrop-blur-xs">
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white backdrop-blur-xs z-20">
                     <Loader2 className="w-8 h-8 animate-spin" />
                   </div>
                 )}

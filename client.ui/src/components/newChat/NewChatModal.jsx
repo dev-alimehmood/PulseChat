@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import api from "../../services/api";
 import { getInitials, avatarColor } from "../../utils/chat";
+import Avatar from "../shared/Avatar";
 import { useAuth } from "../../context/auth";
-import { X, Search as SearchIcon, ChevronRight, UserX } from "lucide-react";
+import { X, Search as SearchIcon, ChevronRight, UserX, UserPlus } from "lucide-react";
 import ModalWrapper from "../shared/ModalWrapper";
 
-const NewChatModal = ({ onSelectUser, onClose }) => {
+const NewChatModal = ({ onSelectUser, onClose, onOpenInvite }) => {
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -94,6 +95,35 @@ const NewChatModal = ({ onSelectUser, onClose }) => {
           </div>
         </div>
 
+        {/* Quick Action: Invite Friends */}
+        <div className="px-3 pt-2 pb-1 border-b border-slate-100 dark:border-white/5">
+          <div
+            onClick={() => {
+              onClose();
+              if (onOpenInvite) {
+                onOpenInvite(search.includes("@") ? search : "");
+              }
+            }}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer bg-gradient-to-r from-[#6366f1]/10 via-[#38bdf8]/10 to-[#2dd4bf]/10 hover:from-[#6366f1]/20 hover:to-[#2dd4bf]/20 border border-[#38bdf8]/25 transition-all duration-200 group shadow-sm mb-1"
+          >
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-white flex items-center justify-center shadow-[0_0_12px_rgba(56,189,248,0.35)] group-hover:scale-105 transition-transform flex-shrink-0">
+              <UserPlus className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#38bdf8] transition-colors flex items-center gap-1.5">
+                Invite Friends to PulseChat
+                <span className="px-1.5 py-0.2 rounded-md text-[9px] font-bold bg-[#2dd4bf]/20 text-[#2dd4bf] border border-[#2dd4bf]/30">
+                  NEW
+                </span>
+              </p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                Share invite link via WhatsApp, SMS, or Email
+              </p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-[#38bdf8] group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+          </div>
+        </div>
+
         {/* User list */}
         <div className="max-h-80 overflow-y-auto custom-scrollbar p-2 bg-white dark:bg-[#0c1228]">
           {loading ? (
@@ -119,11 +149,29 @@ const NewChatModal = ({ onSelectUser, onClose }) => {
               </button>
             </div>
           ) : users.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 gap-2 text-slate-400 dark:text-slate-500 text-center">
-              <UserX className="w-8 h-8 opacity-40 mb-1" />
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                {search ? "No matching contacts found" : "No other users available"}
-              </p>
+            <div className="flex flex-col items-center justify-center py-8 gap-3 text-slate-400 dark:text-slate-500 text-center px-4">
+              <UserX className="w-8 h-8 opacity-40" />
+              <div>
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  {search ? `No contact matching "${search}"` : "No other users available"}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  They might not be on PulseChat yet. Invite them directly!
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  if (onOpenInvite) {
+                    onOpenInvite(search.includes("@") ? search : "");
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] shadow-[0_0_15px_rgba(56,189,248,0.25)] hover:opacity-95 transition-all mt-1"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                Invite {search.includes("@") ? search : "Friend via Email or Link"}
+              </button>
             </div>
           ) : (
             users.map((user) => {
@@ -134,15 +182,16 @@ const NewChatModal = ({ onSelectUser, onClose }) => {
                   onClick={() => onSelectUser(user)}
                   className="flex items-center gap-3.5 px-3.5 py-3 cursor-pointer rounded-2xl transition-all duration-200 hover:bg-gradient-to-r hover:from-[#6366f1]/10 hover:to-[#38bdf8]/10 group border border-transparent hover:border-[#38bdf8]/30 mb-1"
                 >
-                  <div
-                    className="relative w-10 h-10 rounded-2xl flex items-center justify-center text-xs font-bold flex-shrink-0 shadow-sm border border-white/10 group-hover:scale-105 transition-transform"
-                    style={{ background: bg, color: fg }}
-                  >
-                    {getInitials(user.full_name)}
-                    {user.isOnline && (
-                      <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-[#2dd4bf] ring-2 ring-white dark:ring-[#0c1228] shadow-[0_0_6px_#2dd4bf]" />
-                    )}
-                  </div>
+                  <Avatar
+                    src={user.profilepicture}
+                    name={user.full_name}
+                    id={user._id}
+                    size="w-10 h-10 text-xs"
+                    rounded="rounded-2xl"
+                    showOnline={true}
+                    isOnline={user.isOnline}
+                    className="border border-white/10 group-hover:scale-105 transition-transform"
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate text-slate-900 dark:text-white group-hover:text-[#38bdf8] transition-colors">
                       {user.full_name}

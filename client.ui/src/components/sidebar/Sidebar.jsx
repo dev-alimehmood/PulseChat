@@ -1,13 +1,15 @@
+import { useState } from "react";
 import { useAuth } from "../../context/auth";
 import { getInitials, avatarColor } from "../../utils/chat";
+import Avatar from "../shared/Avatar";
 import { useNavigate, useLocation } from "react-router-dom";
-import { MessageSquare, Sun, Moon, LogOut, Info, Shield, LayoutDashboard, Users, Settings, Sparkles } from "lucide-react";
+import { MessageSquare, Sun, Moon, LogOut, LayoutDashboard, Users, Settings, UserPlus } from "lucide-react";
 import { motion } from "framer-motion";
+import InviteModal from "../invite/InviteModal";
 
 const NAV = [
   { label: "Chats", path: "/chatpage", icon: MessageSquare },
   { label: "Settings", path: "/dashboard", icon: Settings },
-  { label: "About", path: "/about", icon: Info },
 ];
 
 const ADMIN_NAV = [
@@ -17,6 +19,7 @@ const ADMIN_NAV = [
 ];
 
 const Sidebar = ({ activeTab, onSelectTab, toggleDark, isDark }) => {
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [Auth, , { logout }] = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -72,6 +75,18 @@ const Sidebar = ({ activeTab, onSelectTab, toggleDark, isDark }) => {
             );
           })}
 
+          {/* Invite Friends Button */}
+          <motion.button
+            key="Invite"
+            title="Invite Friends"
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowInviteModal(true)}
+            className="group relative flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl transition-all duration-300 border border-[#38bdf8]/30 bg-[#38bdf8]/10 text-[#0284c7] dark:text-[#38bdf8] hover:border-[#38bdf8]/60 hover:bg-[#38bdf8]/20 shadow-[0_0_15px_rgba(56,189,248,0.2)]"
+          >
+            <UserPlus className="h-4 w-4 md:h-5 md:w-5 transition-transform group-hover:scale-110" />
+          </motion.button>
+
           {user?.isadmin && (
             <>
               <div className="w-8 h-px bg-slate-200 dark:bg-slate-800 my-1" />
@@ -107,25 +122,20 @@ const Sidebar = ({ activeTab, onSelectTab, toggleDark, isDark }) => {
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate("/profile")}
           title={user?.full_name || "Profile"}
-          className={`relative flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl border transition-all duration-300 overflow-hidden ${
+          className={`relative flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl transition-all duration-300 p-0 ${
             location.pathname === "/profile"
-              ? "ring-2 ring-[#2dd4bf] shadow-[0_0_20px_rgba(45,212,191,0.35)] border-transparent"
-              : "border-slate-200/80 dark:border-white/10 hover:border-[#38bdf8]/50"
+              ? "ring-2 ring-[#2dd4bf] shadow-[0_0_20px_rgba(45,212,191,0.35)]"
+              : "border border-slate-200/80 dark:border-white/10 hover:border-[#38bdf8]/50"
           }`}
-          style={!user?.profilepicture ? { background: bg, color: fg } : {}}
         >
-          {user?.profilepicture ? (
-            <img 
-              src={user.profilepicture} 
-              alt={user?.full_name || "Profile"} 
-              className="w-full h-full object-cover" 
-            />
-          ) : (
-            <span className="text-xs md:text-sm font-bold tracking-tight">
-              {getInitials(user?.full_name)}
-            </span>
-          )}
-          <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#2dd4bf] border-2 border-white dark:border-[#0b1021] z-10" />
+          <Avatar
+            src={user?.profilepicture}
+            name={user?.full_name}
+            id={user?._id}
+            size="w-full h-full text-xs md:text-sm"
+            rounded="rounded-xl md:rounded-2xl"
+            showOnline={false}
+          />
         </motion.button>
 
         {/* Theme Toggle */}
@@ -150,6 +160,13 @@ const Sidebar = ({ activeTab, onSelectTab, toggleDark, isDark }) => {
           <LogOut className="h-4 w-4 md:h-5 md:w-5" />
         </motion.button>
       </div>
+
+      {showInviteModal && (
+        <InviteModal
+          isOpen={showInviteModal}
+          onClose={() => setShowInviteModal(false)}
+        />
+      )}
     </aside>
   );
 };

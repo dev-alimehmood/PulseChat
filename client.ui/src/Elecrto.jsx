@@ -14,9 +14,9 @@ import OTP from "./screens/auth/OTP"
 import P404 from "./screens/P404"
 import ImageUpload from "./layouts/Uploading/ImageUpload"
 import Chatpage from "./screens/Chatpage"
+import ErrorBoundary from "./components/shared/ErrorBoundary"
 import { useAuth } from "./context/auth"
 import SplashScreen from "./components/shared/SplashScreen"
-import AboutApp from "./screens/info/AboutApp"
 import LandingPage from "./screens/LandingPage"
 import { useWebPush } from "./hooks/useWebPush"
 import AdminLayout from "./layouts/AdminLayout"
@@ -88,38 +88,39 @@ const Elecrto = () => {
           <ScrollToTop />
           <BackToTop />
           <ToastContainer theme={dark ? "dark" : "light"} />
-        <Routes>
-          <Route path="/" element={<RootRoute toggleDark={toggleDark} isDark={dark} />} />
-          <Route path="/security" element={<SecurityPage toggleDark={toggleDark} isDark={dark} />} />
-          <Route path="/team" element={<TeamPage />} />
-          <Route path="/blog" element={<BlogPage />} />
-          <Route path="/founder-documentary" element={<FounderDocumentary toggleDark={toggleDark} isDark={dark} />} />
-          
-          <Route element={<AppLayout toggleDark={toggleDark} isDark={dark} />}>
-            <Route path="/chatpage" element={<Chatpage toggleDark={toggleDark} isDark={dark} />} />
-            <Route path="/about" element={<AboutApp />} />
-            <Route path="/dashboard" element={<UserDashboard />} />
-            <Route path="/profile" element={<Profile />} />
-          </Route>
+        <ErrorBoundary title="Application Error">
+          <Routes>
+            <Route path="/" element={<RootRoute toggleDark={toggleDark} isDark={dark} />} />
+            <Route path="/security" element={<SecurityPage toggleDark={toggleDark} isDark={dark} />} />
+            <Route path="/team" element={<TeamPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/founder-documentary" element={<FounderDocumentary toggleDark={toggleDark} isDark={dark} />} />
+            
+            <Route element={<AppLayout toggleDark={toggleDark} isDark={dark} />}>
+              <Route path="/chatpage" element={<Chatpage toggleDark={toggleDark} isDark={dark} />} />
+              <Route path="/dashboard" element={<UserDashboard />} />
+              <Route path="/profile" element={<Profile />} />
+            </Route>
 
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/:token" element={<Activateaccount />} />
-          <Route path="/forgetpassword" element={<ForgotPassword />} />
-          <Route path="/otp" element={<OTP />} />
-          <Route path="/resetpassword/:token" element={<ResetPassword />} />
-          <Route path="/success" element={<Success />} />
-          <Route path="/imageupload" element={<ImageUpload />} />
-          
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<DashboardHome />} />
-            <Route path="users" element={<UserManagement />} />
-            <Route path="chats" element={<ChatManagement />} />
-          </Route>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/:token" element={<Activateaccount />} />
+            <Route path="/forgetpassword" element={<ForgotPassword />} />
+            <Route path="/otp" element={<OTP />} />
+            <Route path="/resetpassword/:token" element={<ResetPassword />} />
+            <Route path="/success" element={<Success />} />
+            <Route path="/imageupload" element={<ImageUpload />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<DashboardHome />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="chats" element={<ChatManagement />} />
+            </Route>
 
-          <Route path="/*" element={<P404 />} />
-        </Routes>
+            <Route path="/*" element={<P404 />} />
+          </Routes>
+        </ErrorBoundary>
       </Router>
       </div>
     </div>

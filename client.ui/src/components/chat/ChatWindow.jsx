@@ -14,11 +14,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, Search, MoreVertical, Paperclip, Smile, Send, Edit2, Trash2, Reply, 
   Check, CheckCheck, AlertCircle, CornerDownRight, X, Phone, Video, Mic, Square, 
-  Trash, Image, Download, CornerUpRight, ShieldBan, User, Shield, Info, Lock, Clock, Plus, Copy
+  Trash, Image, Download, CornerUpRight, ShieldBan, ShieldCheck, User, Shield, Info, Lock, Clock, Plus, Copy
 } from "lucide-react";
 import ForwardModal from "./ForwardModal";
 import ProfileModal from "../profile/ProfileModal";
 import AnimatedReveal from "../shared/AnimatedReveal";
+import Avatar from "../shared/Avatar";
 import VoicePlayer from "./VoicePlayer";
 import api from "../../services/api";
 import { successtoast, errortoast } from "../../toastify/toastify";
@@ -95,7 +96,8 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack, openNewChat }) =
   const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
   const [imageBase64, setImageBase64] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [showRestoreNotice, setShowRestoreNotice] = useState(false);
+  const [quarantinedCount, setQuarantinedCount] = useState(0);
+  const [restoringQuarantine, setRestoringQuarantine] = useState(false);
 
   const bottomRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -208,6 +210,38 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack, openNewChat }) =
     return () => socket.off("receivePulse", handlePulse);
   }, [socket, conversation]);
 
+  const otherUser = conversation?.user || {};
+  const [bg, fg] = avatarColor(otherUser?._id || "");
+  const grouped = groupMessagesByDate(messages);
+
+  const otherUserId = otherUser?._id ? String(otherUser._id) : null;
+  const isBlocked = Boolean(
+    otherUserId &&
+    Array.isArray(Auth?.User?.blockedUsers) &&
+    Auth.User.blockedUsers.some((u) => {
+      const uId = u && typeof u === "object" ? u._id : u;
+      return uId ? String(uId) === otherUserId : false;
+    })
+  );
+
+  const checkQuarantinedMessages = useCallback(async () => {
+    if (!conversation?._id) return;
+    try {
+      const { data } = await api.get(`/messages/${conversation._id}/quarantined-count`);
+      setQuarantinedCount(data.count || 0);
+    } catch (err) {
+      console.error("checkQuarantinedMessages error:", err);
+    }
+  }, [conversation?._id]);
+
+  useEffect(() => {
+    if (conversation?._id && !isBlocked) {
+      checkQuarantinedMessages();
+    } else {
+      setQuarantinedCount(0);
+    }
+  }, [conversation?._id, isBlocked, checkQuarantinedMessages]);
+
   if (!conversation) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-slate-50/50 dark:bg-transparent p-6 text-center relative overflow-hidden select-none">
@@ -261,49 +295,69 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack, openNewChat }) =
     );
   }
 
-  const otherUser = conversation.user;
-  const [bg, fg] = avatarColor(otherUser?._id || "");
-  const grouped = groupMessagesByDate(messages);
-
-  const isBlocked = Auth?.User?.blockedUsers?.some(u => String(u._id || u) === String(otherUser?._id));
-
   const handleToggleBlock = async () => {
     try {
       const { data } = await api.post(`/auth/block/${otherUser?._id}`);
-      if (data.success) {
-        const nextBlocked = !isBlocked;
+      if (data?.success) {
+        const nextBlocked = data.success.isBlocked !== undefined ? data.success.isBlocked : !isBlocked;
         const userName = otherUser?.full_name || otherUser?.name || "this user";
         const message = nextBlocked
-          ? `You blocked ${userName}. Messages are now paused until you unblock them.`
-          : `You unblocked ${userName}. The conversation is restored and ready for messaging.`;
+          ? `You blocked ${userName}. Messages sent from them will be quarantined.`
+          : `You unblocked ${userName}.`;
         successtoast(message);
 
-        const updatedBlocked = nextBlocked
-          ? [...(Auth.User.blockedUsers || []), otherUser?._id]
-          : Auth.User.blockedUsers.filter(u => String(u._id || u) !== String(otherUser?._id));
+        const currentBlockedList = Array.isArray(Auth?.User?.blockedUsers) ? Auth.User.blockedUsers : [];
+        const updatedBlocked = data.success.blockedUsers || (nextBlocked
+          ? [...currentBlockedList, otherUser?._id]
+          : currentBlockedList.filter(u => String(u?._id || u) !== String(otherUser?._id)));
 
-        setAuth({
-          ...Auth,
-          User: { ...Auth.User, blockedUsers: updatedBlocked }
-        });
+        setAuth((prev) => ({
+          ...prev,
+          User: { ...(prev?.User || {}), blockedUsers: updatedBlocked }
+        }));
+
+        try {
+          const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+          localStorage.setItem("user", JSON.stringify({ ...storedUser, blockedUsers: updatedBlocked }));
+        } catch (storageErr) {
+          console.warn("Storage update error:", storageErr);
+        }
 
         if (!nextBlocked) {
-          setShowRestoreNotice(true);
-          await refreshMessages();
+          try {
+            await checkQuarantinedMessages();
+          } catch (e) {
+            console.error("Quarantine check error:", e);
+          }
+          try {
+            await refreshMessages();
+          } catch (e) {
+            console.error("Message refresh error:", e);
+          }
         }
       }
     } catch (err) {
+      console.error("handleToggleBlock error:", err);
       const userName = otherUser?.full_name || otherUser?.name || "this user";
       const backendMessage = err?.response?.data?.error || err?.response?.data?.message;
       errortoast(backendMessage || `Unable to update block status for ${userName}.`);
     }
   };
 
-  const handleRestoreConversation = async () => {
-    await refreshMessages();
-    setShowRestoreNotice(false);
-    const userName = otherUser?.full_name || otherUser?.name || "this contact";
-    successtoast(`Conversation with ${userName} refreshed and ready to continue.`);
+  const handleRestoreQuarantined = async () => {
+    if (!conversation?._id) return;
+    setRestoringQuarantine(true);
+    try {
+      const { data } = await api.post(`/messages/${conversation._id}/restore-quarantined`);
+      successtoast(data.message || "Messages restored successfully!");
+      setQuarantinedCount(0);
+      await refreshMessages();
+    } catch (err) {
+      console.error("Failed to restore messages:", err);
+      errortoast("Failed to restore quarantined messages");
+    } finally {
+      setRestoringQuarantine(false);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -539,21 +593,18 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack, openNewChat }) =
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowProfile(true)}
-            className="relative w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-sm cursor-pointer border border-white/10 group overflow-hidden"
-            style={!(otherUser?.profilepicture || otherUser?.avatar) ? { background: bg, color: fg } : {}}
+            className="cursor-pointer shrink-0"
           >
-            {(otherUser?.profilepicture || otherUser?.avatar) ? (
-              <img 
-                src={otherUser.profilepicture || otherUser.avatar} 
-                alt={otherUser?.full_name || otherUser?.name || "Avatar"} 
-                className="w-full h-full object-cover" 
-              />
-            ) : (
-              getInitials(otherUser?.full_name || otherUser?.name)
-            )}
-            {otherUser?.isOnline && (
-              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#2dd4bf] ring-2 ring-white dark:ring-[#0c1228] shadow-[0_0_8px_#2dd4bf] z-10" />
-            )}
+            <Avatar
+              src={otherUser?.profilepicture || otherUser?.avatar}
+              name={otherUser?.full_name || otherUser?.name}
+              id={otherUser?._id || otherUser?.id}
+              size="w-12 h-12 text-sm"
+              rounded="rounded-2xl"
+              showOnline={true}
+              isOnline={otherUser?.isOnline}
+              className="border border-white/10 group-hover:border-[#38bdf8]/40"
+            />
           </motion.div>
 
           <div 
@@ -627,12 +678,46 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack, openNewChat }) =
         </div>
       )}
 
-      {showRestoreNotice && !isBlocked && (
-        <div className="mx-4 mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300 flex items-center justify-between gap-3 shadow-sm">
-          <span>Conversation restored. Refresh it anytime to view the latest messages.</span>
-          <button onClick={handleRestoreConversation} className="font-semibold underline-offset-2 hover:underline">Restore</button>
-        </div>
-      )}
+      {/* Quarantined Messages Restoration Permission Banner */}
+      <AnimatePresence>
+        {quarantinedCount > 0 && !isBlocked && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mx-4 my-2 p-3.5 rounded-2xl border border-[#38bdf8]/30 bg-gradient-to-r from-[#4f46e5]/10 via-[#38bdf8]/10 to-[#2dd4bf]/10 backdrop-blur-md shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 z-10"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#6366f1] to-[#38bdf8] text-white flex items-center justify-center shrink-0 shadow-md">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">
+                  {quarantinedCount} {quarantinedCount === 1 ? "Message" : "Messages"} Sent During Block Period
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Would you like to restore them to your active conversation?
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+              <button
+                onClick={() => setQuarantinedCount(0)}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
+              >
+                Keep Archived
+              </button>
+              <button
+                onClick={handleRestoreQuarantined}
+                disabled={restoringQuarantine}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-[#4f46e5] to-[#38bdf8] text-white shadow-md shadow-indigo-500/20 hover:opacity-95 transition-all flex items-center gap-1.5"
+              >
+                {restoringQuarantine ? "Restoring..." : `Restore (${quarantinedCount})`}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Messages */}
       <div 
