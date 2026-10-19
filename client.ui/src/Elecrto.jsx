@@ -50,6 +50,16 @@ const RootRoute = ({ toggleDark, isDark }) => {
   return <LandingPage toggleDark={toggleDark} isDark={isDark} />
 }
 
+// Redirect logged-in users directly to chat workspace if they attempt to access guest auth routes
+const GuestOnlyRoute = ({ children }) => {
+  const [Auth] = useAuth()
+  if (!Auth.isReady) return null
+  if (Auth?.token || Auth?.User) {
+    return <Navigate to="/chatpage" replace />
+  }
+  return children
+}
+
 const Elecrto = () => {
   const [Auth] = useAuth()
   const [initialLoading, setInitialLoading] = useState(false)
@@ -92,6 +102,7 @@ const Elecrto = () => {
         <ErrorBoundary title="Application Error">
           <Routes>
             <Route path="/" element={<RootRoute toggleDark={toggleDark} isDark={dark} />} />
+            <Route path="/landing" element={<LandingPage toggleDark={toggleDark} isDark={dark} />} />
             <Route path="/security" element={<SecurityPage toggleDark={toggleDark} isDark={dark} />} />
             <Route path="/team" element={<TeamPage />} />
             <Route path="/blog" element={<BlogPage />} />
@@ -104,8 +115,8 @@ const Elecrto = () => {
               <Route path="/profile" element={<Profile />} />
             </Route>
 
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+            <Route path="/login" element={<GuestOnlyRoute><Login /></GuestOnlyRoute>} />
+            <Route path="/signup" element={<GuestOnlyRoute><Signup /></GuestOnlyRoute>} />
             <Route path="/:token" element={<Activateaccount />} />
             <Route path="/forgetpassword" element={<ForgotPassword />} />
             <Route path="/otp" element={<OTP />} />

@@ -323,7 +323,8 @@ io.on("connection", (socket) => {
 export { io, onlineUsers };
 
 // ================= MIDDLEWARE =================
-app.use(express.json({ limit: "12mb" }));
+app.use(express.json({ limit: "25mb" }));
+app.use(express.urlencoded({ extended: true, limit: "25mb" }));
 app.use(cors());
 app.use(morgan("dev"));
 

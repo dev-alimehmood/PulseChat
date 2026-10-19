@@ -3,13 +3,15 @@ import { useAuth } from "../../context/auth";
 import { getInitials, avatarColor } from "../../utils/chat";
 import Avatar from "../shared/Avatar";
 import { useNavigate, useLocation } from "react-router-dom";
-import { MessageSquare, Sun, Moon, LogOut, LayoutDashboard, Users, Settings, UserPlus } from "lucide-react";
+import { MessageSquare, Sun, Moon, LogOut, LayoutDashboard, Users, Settings, UserPlus, Smartphone, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import InviteModal from "../invite/InviteModal";
+import usePWAInstall from "../../hooks/usePWAInstall";
 
 const NAV = [
   { label: "Chats", path: "/chatpage", icon: MessageSquare },
   { label: "Settings", path: "/dashboard", icon: Settings },
+  { label: "Landing Page", path: "/landing", icon: Globe },
 ];
 
 const ADMIN_NAV = [
@@ -21,6 +23,7 @@ const ADMIN_NAV = [
 const Sidebar = ({ activeTab, onSelectTab, toggleDark, isDark, className = "" }) => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [Auth, , { logout }] = useAuth();
+  const { isInstallable, installApp } = usePWAInstall();
   const navigate = useNavigate();
   const location = useLocation();
   const user = Auth?.User;
@@ -140,6 +143,19 @@ const Sidebar = ({ activeTab, onSelectTab, toggleDark, isDark, className = "" })
             showOnline={false}
           />
         </motion.button>
+
+        {/* PWA Install Button (shown when browser allows installation) */}
+        {isInstallable && (
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={installApp}
+            title="Install PulseChat on your phone"
+            className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl border border-[#2dd4bf]/40 bg-[#2dd4bf]/10 text-[#2dd4bf] hover:bg-[#2dd4bf]/20 transition-all duration-300 relative shadow-[0_0_15px_rgba(45,212,191,0.25)] animate-pulse"
+          >
+            <Smartphone className="h-4 w-4 md:h-5 md:w-5" />
+          </motion.button>
+        )}
 
         {/* Theme Toggle */}
         <motion.button

@@ -8,16 +8,18 @@ import { successtoast, errortoast } from "../../toastify/toastify";
 import { 
   BarChart3, User, TrendingUp, ShieldCheck, ShieldBan, MessageSquare, 
   ArrowRight, Sparkles, Zap, Copy, CheckCircle2, UserPlus, Volume2, 
-  VolumeX, Radio, Check, Eye, EyeOff, ShieldAlert, Lock, Activity
+  VolumeX, Radio, Check, Eye, EyeOff, ShieldAlert, Lock, Activity, Smartphone
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import InviteModal from "../../components/invite/InviteModal";
 import PulseLoader from "../../components/shared/PulseLoader";
+import usePWAInstall from "../../hooks/usePWAInstall";
 
 const UserDashboard = () => {
   const [Auth, setAuth] = useAuth();
   const socket = useSocket();
   const navigate = useNavigate();
+  const { isInstallable, isInstalled, installApp } = usePWAInstall();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -524,6 +526,31 @@ const UserDashboard = () => {
                     {copiedLink ? "Copied" : "Copy"}
                   </span>
                 </button>
+              </div>
+
+              {/* Mobile / PWA App Installation Card */}
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-[#2dd4bf]/10 to-transparent border border-emerald-500/20">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-500 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                    <Smartphone className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                      {isInstalled ? "Mobile App Installed" : "Install Mobile App"}
+                    </p>
+                    <p className="text-[10px] text-slate-400 truncate">
+                      {isInstalled ? "Running in standalone mode" : "Add PulseChat directly to your phone's home screen"}
+                    </p>
+                  </div>
+                </div>
+                {!isInstalled && (
+                  <button
+                    onClick={installApp}
+                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#2dd4bf] to-emerald-500 text-slate-950 font-bold text-xs shadow-sm hover:opacity-90 active:scale-95 transition-all shrink-0 ml-2"
+                  >
+                    Install
+                  </button>
+                )}
               </div>
 
               {/* Navigation Shortcuts */}

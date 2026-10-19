@@ -840,10 +840,10 @@ const LandingPage = ({ toggleDark, isDark }) => {
               </span>
             </div>
             <Link
-              to="/signup"
+              to={Auth?.User ? "/chatpage" : "/signup"}
               className="text-xs font-mono font-bold text-[#2dd4bf] hover:text-white flex items-center gap-1.5 transition-colors shrink-0"
             >
-              <span>Join Early Access List</span>
+              <span>{Auth?.User ? "Enter Workspace" : "Join Early Access List"}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

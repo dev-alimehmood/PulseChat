@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
 import { MessageSquare } from "lucide-react";
+import { useAuth } from "../../context/auth";
 
 const Footer = () => {
+  const [Auth] = useAuth();
+  const isLoggedIn = Boolean(Auth?.token || Auth?.User);
   return (
     <footer className="border-t border-white/10 bg-[#05070f] py-16 relative z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -55,8 +58,16 @@ const Footer = () => {
           <div className="space-y-3 text-sm">
             <h4 className="font-bold text-white uppercase text-xs tracking-wider font-mono">Portal</h4>
             <ul className="space-y-2 text-slate-400">
-              <li><Link to="/login" className="hover:text-[#2dd4bf] transition-colors">Sign In</Link></li>
-              <li><Link to="/signup" className="hover:text-[#2dd4bf] transition-colors">Create Account</Link></li>
+              <li>
+                <Link to={isLoggedIn ? "/chatpage" : "/login"} className="hover:text-[#2dd4bf] transition-colors">
+                  {isLoggedIn ? "Open Workspace" : "Sign In"}
+                </Link>
+              </li>
+              <li>
+                <Link to={isLoggedIn ? "/chatpage" : "/signup"} className="hover:text-[#2dd4bf] transition-colors">
+                  {isLoggedIn ? "Direct Messages" : "Create Account"}
+                </Link>
+              </li>
               <li><Link to="/chatpage" className="hover:text-[#2dd4bf] transition-colors">Launch Workspace</Link></li>
             </ul>
           </div>

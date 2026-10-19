@@ -14,13 +14,14 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (Auth?.token) {
-      const timer = setTimeout(() => {
-        navigate("/");
-      }, 1500);
-      return () => clearTimeout(timer);
+    if ((Auth?.token || Auth?.User) && Auth?.isReady) {
+      navigate("/chatpage", { replace: true });
     }
   }, [Auth, navigate]);
+
+  if ((Auth?.token || Auth?.User) && Auth?.isReady) {
+    return null;
+  }
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);

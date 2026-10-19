@@ -2,15 +2,29 @@ import { useFormik } from "formik";
 import { useState } from "react";
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle2, UserPlus, ExternalLink } from "lucide-react";
 import { SignUpSchema } from "../../Schemas/Index";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import apis from "../../config/apis";
 import { errortoast, successtoast } from "../../toastify/toastify";
 import { motion } from "framer-motion";
 import AuthLayout from "./AuthLayout";
 import { getFriendlyErrorMessage } from "../../utils/friendlyError";
+import { useAuth } from "../../context/auth";
 
 const SignUp = () => {
+  const [Auth] = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if ((Auth?.token || Auth?.User) && Auth?.isReady) {
+      navigate("/chatpage", { replace: true });
+    }
+  }, [Auth, navigate]);
+
+  if ((Auth?.token || Auth?.User) && Auth?.isReady) {
+    return null;
+  }
+
   const [searchParams] = useSearchParams();
   const refUserId = searchParams.get("ref") || "";
   const inviteEmail = searchParams.get("email") || "";

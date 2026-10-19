@@ -10,6 +10,7 @@ import api from "../../services/api";
 import { successtoast, errortoast } from "../../toastify/toastify";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
+import ImageCropperModal from "../../components/profile/ImageCropperModal";
 
 // High-speed client-side image compressor keeping base64 under 100KB
 const compressImage = (file, maxWidth = 500, quality = 0.85) => {
@@ -43,7 +44,6 @@ const Profile = () => {
   const [Auth, setAuth] = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const fileInputRef = useRef(null);
   
   const targetUser = location.state?.user || Auth?.User;
   const isMe = String(Auth?.User?._id) === String(targetUser?._id);
@@ -53,6 +53,7 @@ const Profile = () => {
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showCropperModal, setShowCropperModal] = useState(false);
 
   // Editable fields
   const [formData, setFormData] = useState({
@@ -64,6 +65,42 @@ const Profile = () => {
   });
   
   const [newImagePreview, setNewImagePreview] = useState(null);
+
+  const handleSaveCroppedPhoto = async (croppedBase64) => {
+    if (!isMe || !croppedBase64) return;
+    try {
+      setUploadingPhoto(true);
+      setNewImagePreview(croppedBase64);
+
+      let finalUrl = croppedBase64;
+      try {
+        const { data: uploadData } = await api.post("/messages/upload-image", { image: croppedBase64 });
+        if (uploadData.Location) {
+          finalUrl = uploadData.Location;
+        }
+      } catch (uploadError) {
+        console.warn("S3 upload fallback to base64:", uploadError);
+        finalUrl = croppedBase64;
+      }
+
+      const updatedFormData = { ...formData, profilepicture: finalUrl };
+      const { data } = await api.put("/users/profile", updatedFormData);
+      const updatedUser = data?.success?.user || data?.user || { ...Auth.User, ...updatedFormData };
+      setAuth((prev) => ({
+        ...prev,
+        User: { ...prev.User, ...updatedUser }
+      }));
+      localStorage.setItem("user", JSON.stringify({ ...Auth.User, ...updatedUser }));
+      setFormData((prev) => ({ ...prev, profilepicture: updatedUser.profilepicture || finalUrl }));
+      setNewImagePreview(null);
+      successtoast("Profile picture updated!");
+    } catch (err) {
+      console.error("Failed to update profile picture", err);
+      errortoast("Failed to update profile picture");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -85,48 +122,6 @@ const Profile = () => {
     );
   }
 
-  const handleImageSelect = async (e) => {
-    if (!isMe) return;
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setUploadingPhoto(true);
-      const compressed = await compressImage(file);
-      setNewImagePreview(compressed);
-
-      // Attempt immediate upload
-      let finalUrl = compressed;
-      try {
-        const { data: uploadData } = await api.post("/messages/upload-image", { image: compressed });
-        if (uploadData.Location) {
-          finalUrl = uploadData.Location;
-        }
-      } catch (uploadError) {
-        // Fallback: save compressed base64 directly to user profile
-        console.warn("S3 upload failed, falling back to compressed base64:", uploadError);
-        finalUrl = compressed;
-      }
-
-      // Save directly to profile for immediate seamless update
-      const updatedFormData = { ...formData, profilepicture: finalUrl };
-      const { data } = await api.put("/users/profile", updatedFormData);
-      const updatedUser = data?.success?.user || data?.user || { ...Auth.User, ...updatedFormData };
-      setAuth((prev) => ({
-        ...prev,
-        User: { ...prev.User, ...updatedUser }
-      }));
-      localStorage.setItem("user", JSON.stringify({ ...Auth.User, ...updatedUser }));
-      setFormData((prev) => ({ ...prev, profilepicture: updatedUser.profilepicture || finalUrl }));
-      setNewImagePreview(null);
-      successtoast("Profile picture updated!");
-    } catch (err) {
-      console.error("Failed to process image", err);
-      errortoast("Failed to update profile picture");
-    } finally {
-      setUploadingPhoto(false);
-    }
-  };
 
   const handleRemovePhoto = async () => {
     if (!isMe) return;
@@ -248,21 +243,14 @@ const Profile = () => {
 
               {/* Camera Upload Badge */}
               {isMe && (
-                <>
-                  <label
-                    title="Change Profile Photo"
-                    className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-white flex items-center justify-center shadow-lg shadow-[#38bdf8]/30 cursor-pointer hover:scale-110 active:scale-95 transition-all border-2 border-white dark:border-[#0c1228]"
-                  >
-                    <Camera className="w-5 h-5" />
-                    <input 
-                      ref={fileInputRef}
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handleImageSelect} 
-                      className="hidden" 
-                    />
-                  </label>
-                </>
+                <button
+                  type="button"
+                  onClick={() => setShowCropperModal(true)}
+                  title="Take photo with camera or adjust photo"
+                  className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-white flex items-center justify-center shadow-lg shadow-[#38bdf8]/30 cursor-pointer hover:scale-110 active:scale-95 transition-all border-2 border-white dark:border-[#0c1228]"
+                >
+                  <Camera className="w-5 h-5" />
+                </button>
               )}
             </div>
 
@@ -329,8 +317,8 @@ const Profile = () => {
               {isMe && currentDisplayPhoto && (
                 <div className="mt-3 flex items-center justify-center sm:justify-start gap-3">
                   <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-xs font-semibold text-[#38bdf8] hover:underline flex items-center gap-1"
+                    onClick={() => setShowCropperModal(true)}
+                    className="text-xs font-semibold text-[#38bdf8] hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <Camera className="w-3.5 h-3.5" /> Change Photo
                   </button>
@@ -468,6 +456,15 @@ const Profile = () => {
 
         </div>
       </div>
+
+      {/* Interactive Photo Cropper, Adjuster & Camera Modal */}
+      <ImageCropperModal
+        isOpen={showCropperModal}
+        onClose={() => setShowCropperModal(false)}
+        onSave={handleSaveCroppedPhoto}
+        currentPhoto={currentDisplayPhoto}
+        currentName={user?.full_name}
+      />
     </div>
   );
 };
