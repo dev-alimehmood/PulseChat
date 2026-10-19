@@ -102,14 +102,14 @@ const Login = () => {
       cardTitle="Welcome Back"
       cardSubtitle="Enter your account credentials to access your conversations."
     >
-      <form onSubmit={loginhandler} className="space-y-5">
+      <form onSubmit={loginhandler} className="space-y-3.5 sm:space-y-4">
         
         {/* Inline Error Notice */}
         {errorMessage && (
           <motion.div
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2.5 leading-relaxed shadow-sm"
+            className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2.5 leading-relaxed shadow-sm"
           >
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
             <span className="font-medium">{errorMessage}</span>
@@ -118,12 +118,12 @@ const Login = () => {
 
         {/* Email Address */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
             Email Address
           </label>
           <div className="relative group">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#38bdf8] transition-colors">
-              <Mail className="w-5 h-5" />
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#38bdf8] transition-colors">
+              <Mail className="w-4 h-4" />
             </div>
             <input
               type="email"
@@ -133,14 +133,14 @@ const Login = () => {
               placeholder="alex@pulsechat.io"
               required
               autoComplete="email"
-              className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-[#0f152d]/80 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-[#38bdf8] focus:ring-2 focus:ring-[#38bdf8]/20 focus:bg-white dark:focus:bg-[#121936] transition-all duration-300 shadow-sm text-sm"
+              className="w-full pl-10 pr-4 py-2.5 sm:py-3 bg-slate-50 dark:bg-[#0f152d]/80 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-[#38bdf8] focus:ring-2 focus:ring-[#38bdf8]/20 focus:bg-white dark:focus:bg-[#121936] transition-all duration-300 shadow-sm text-xs sm:text-sm"
             />
           </div>
         </div>
 
         {/* Password */}
         <div>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-1.5">
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Password
             </label>
@@ -152,8 +152,8 @@ const Login = () => {
             </Link>
           </div>
           <div className="relative group">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#38bdf8] transition-colors">
-              <Lock className="w-5 h-5" />
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#38bdf8] transition-colors">
+              <Lock className="w-4 h-4" />
             </div>
             <input
               type={showPassword ? "text" : "password"}
@@ -163,21 +163,21 @@ const Login = () => {
               placeholder="••••••••••••"
               required
               autoComplete="current-password"
-              className="w-full pl-12 pr-12 py-3.5 bg-slate-50 dark:bg-[#0f152d]/80 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-[#38bdf8] focus:ring-2 focus:ring-[#38bdf8]/20 focus:bg-white dark:focus:bg-[#121936] transition-all duration-300 shadow-sm text-sm"
+              className="w-full pl-10 pr-10 py-2.5 sm:py-3 bg-slate-50 dark:bg-[#0f152d]/80 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-[#38bdf8] focus:ring-2 focus:ring-[#38bdf8]/20 focus:bg-white dark:focus:bg-[#121936] transition-all duration-300 shadow-sm text-xs sm:text-sm"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
             >
-              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
         </div>
 
         {/* Remember Me Checkbox */}
-        <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center justify-between pt-0.5">
           <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-600 dark:text-slate-400">
             <input
               type="checkbox"
@@ -195,11 +195,11 @@ const Login = () => {
           whileTap={{ scale: 0.98 }}
           type="submit"
           disabled={loading}
-          className="w-full mt-2 bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-slate-950 font-bold py-3.5 rounded-2xl shadow-[0_0_25px_rgba(45,212,191,0.35)] hover:shadow-[0_0_40px_rgba(45,212,191,0.55)] transition-all duration-300 flex justify-center items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed group cursor-pointer"
+          className="w-full mt-2 bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-slate-950 font-bold py-3 rounded-2xl shadow-[0_0_25px_rgba(45,212,191,0.35)] hover:shadow-[0_0_40px_rgba(45,212,191,0.55)] transition-all duration-300 flex justify-center items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed group cursor-pointer"
         >
           {loading ? (
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
               <span>Authenticating...</span>
             </div>
           ) : (
@@ -211,8 +211,8 @@ const Login = () => {
         </motion.button>
 
         {/* Switch to Signup */}
-        <div className="pt-4 text-center border-t border-slate-200/80 dark:border-white/10">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+        <div className="pt-3.5 text-center border-t border-slate-200/80 dark:border-white/10">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
             Don't have an account yet?{" "}
             <Link
               to="/signup"

@@ -239,25 +239,32 @@ export async function sendPulseEmail({
     });
   }
 
+  const messageId = `<pulsechat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}@pulsechat.io>`;
+
   const mailOptions = {
     from: `"PulseChat" <${senderEmail}>`,
+    sender: senderEmail,
     to,
     replyTo: `"PulseChat Support" <${senderEmail}>`,
     subject,
     text,
     html,
+    messageId,
     attachments,
     headers: {
-      "X-Mailer": "PulseChat Secure Mailer",
-      "X-Priority": "3", // Normal priority (never use 1/high as it flags spam)
-      "X-Auto-Response-Suppress": "OOF, AutoReply",
-      "List-Unsubscribe": `<mailto:${senderEmail}?subject=unsubscribe>`,
+      "X-Mailer": "PulseChat Transactional Engine",
+      "X-Entity-Ref-ID": messageId,
+      "Auto-Submitted": "auto-generated",
+      "X-Auto-Response-Suppress": "All",
+      "Precedence": "bulk",
+      "List-Unsubscribe": `<mailto:${senderEmail}?subject=Unsubscribe>`,
+      "X-Report-Abuse": `<mailto:${senderEmail}>`,
     },
   };
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log(`[PulseChat Mailer] Email dispatched successfully to ${to} (MessageId: ${info.messageId})`);
+    console.log(`[PulseChat Mailer] System Email dispatched from PulseChat to ${to} (MessageId: ${info.messageId})`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error(`[PulseChat Mailer] Delivery failed for ${to}:`, error.message);

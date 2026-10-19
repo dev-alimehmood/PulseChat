@@ -31,6 +31,7 @@ import BlogPage from "./screens/BlogPage"
 import FounderDocumentary from "./screens/FounderDocumentary"
 import AboutApp from "./screens/info/AboutApp"
 import BackToTop from "./components/shared/BackToTop"
+import MobileInstallPrompt from "./components/shared/MobileInstallPrompt"
 
 // Automatically scroll window to top whenever location path changes
 const ScrollToTop = () => {
@@ -98,6 +99,7 @@ const Elecrto = () => {
         <Router>
           <ScrollToTop />
           <BackToTop />
+          <MobileInstallPrompt />
           <ToastContainer theme={dark ? "dark" : "light"} />
         <ErrorBoundary title="Application Error">
           <Routes>

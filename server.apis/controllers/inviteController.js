@@ -36,17 +36,21 @@ export const sendEmailInvite = async (req, res) => {
       });
     }
 
-    // Determine client base URL
     const baseUrl =
       req.headers.origin ||
       process.env.CLIENT_URL ||
       "https://pulsechat-ali.netlify.app";
 
+    const inviterName = inviter.full_name || "A colleague";
+    const noteHtml = personalMessage && personalMessage.trim()
+      ? `<blockquote style="margin: 16px 0; padding: 12px 16px; background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; border-radius: 8px; font-style: italic; color: #cbd5e1;">"${personalMessage.trim()}"</blockquote>`
+      : "";
+
     const inviteLink = `${baseUrl}/signup?ref=${inviter._id}&email=${encodeURIComponent(cleanEmail)}`;
 
     await sendPulseEmail({
       to: cleanEmail,
-      subject: `${inviterName} invited you to join PulseChat`,
+      subject: `[PulseChat] ${inviterName} invited you to join PulseChat`,
       headline: `${inviterName} invited you to connect`,
       bodyHtml: `<p><strong>${inviterName}</strong> has invited you to connect on PulseChat — high-speed encrypted messaging with instant voice notes and media sharing.</p>${noteHtml}`,
       actionUrl: inviteLink,
