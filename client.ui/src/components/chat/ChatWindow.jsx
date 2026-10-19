@@ -23,6 +23,7 @@ import Avatar from "../shared/Avatar";
 import VoicePlayer from "./VoicePlayer";
 import api from "../../services/api";
 import { successtoast, errortoast } from "../../toastify/toastify";
+import { compressImage } from "../../utils/imageCompressor";
 
 const MessageStatus = ({ status }) => {
   const currentStatus = status || "sent";
@@ -170,10 +171,14 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack, openNewChat }) =
     }
   }, [messages, typingUsers]);
 
-  // focus input and instant scroll to bottom on conversation change
+  // focus input on desktop and instant scroll to bottom on conversation change
   useEffect(() => {
     if (conversation) {
-      inputRef.current?.focus();
+      // On mobile devices, do not auto-focus to keep the virtual keyboard closed until user taps input
+      const isMobileDevice = typeof window !== "undefined" && (window.innerWidth < 768 || "ontouchstart" in window);
+      if (!isMobileDevice) {
+        inputRef.current?.focus();
+      }
       if (messagesContainerRef.current) {
         messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
       }
@@ -464,16 +469,24 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack, openNewChat }) =
     }
   };
 
-  const handleImageSelect = (e) => {
+  const handleImageSelect = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      setImagePreviewUrl(reader.result);
-      setImageBase64(reader.result);
-    };
+    try {
+      // High-performance client-side image compression downscales large mobile camera photos (< 100ms)
+      const compressedDataUrl = await compressImage(file, 1600, 0.82);
+      setImagePreviewUrl(compressedDataUrl);
+      setImageBase64(compressedDataUrl);
+    } catch (err) {
+      console.warn("Client compression fallback:", err);
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        setImagePreviewUrl(reader.result);
+        setImageBase64(reader.result);
+      };
+    }
     e.target.value = null; // reset input
   };
 

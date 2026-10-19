@@ -23,7 +23,8 @@ const Navbar = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const isHome = location.pathname === "/";
+  const isHome = location.pathname === "/" || location.pathname === "/landing";
+  const homePath = Auth?.User ? "/landing" : "/";
 
   const closeMenu = () => setIsMobileMenuOpen(false);
 
@@ -42,7 +43,7 @@ const Navbar = () => {
         
         {/* Brand Logo */}
         <div className="flex items-center gap-4">
-          <Link to="/" onClick={closeMenu} className="flex items-center gap-3 group">
+          <Link to={homePath} onClick={closeMenu} className="flex items-center gap-3 group">
             <div className="relative">
               <img
                 src="/logo.png"
@@ -62,7 +63,7 @@ const Navbar = () => {
         {/* Desktop Nav Links */}
         <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-300">
           <Link
-            to="/"
+            to={homePath}
             className={`transition-colors flex items-center gap-2 group ${
               isHome ? "text-[#34d399] font-bold" : "hover:text-[#34d399]"
             }`}
@@ -158,7 +159,7 @@ const Navbar = () => {
       {isMobileMenuOpen && (
         <div className="md:hidden border-b border-white/10 bg-[#080c1a]/98 backdrop-blur-3xl px-4 py-5 space-y-3 shadow-2xl animate-fade-in-down border-t border-white/5">
           <Link
-            to="/"
+            to={homePath}
             onClick={closeMenu}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-sm font-medium ${
               isHome ? "bg-teal-500/10 border-teal-500/30 text-teal-300 font-bold" : "bg-white/5 border-white/5 text-slate-200 hover:bg-white/10"
@@ -220,7 +221,20 @@ const Navbar = () => {
             <span>Blog & Technical Logs</span>
           </Link>
 
-          {!Auth?.User && (
+          {Auth?.User ? (
+            <div className="pt-2 border-t border-white/10">
+              <button
+                onClick={() => {
+                  closeMenu();
+                  navigate("/chatpage");
+                }}
+                className="w-full py-2.5 text-center rounded-xl bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-white font-bold text-xs shadow-md flex items-center justify-center gap-2"
+              >
+                <span>Launch Workspace</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
             <div className="pt-2 border-t border-white/10 flex items-center gap-3">
               <Link
                 to="/login"

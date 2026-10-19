@@ -12,13 +12,28 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Global 401 handler — redirect to login if token expired
+// Global 401 handler — only redirect if an authenticated session expired
 api.interceptors.response.use(
   (res) => res,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      window.location.href = "/login";
+    const isAuthRoute =
+      error.config?.url?.includes("/auth/login") ||
+      error.config?.url?.includes("/auth/register") ||
+      error.config?.url?.includes("/auth/verify");
+
+    if (error.response?.status === 401 && !isAuthRoute) {
+      const hasToken = localStorage.getItem("token");
+      if (hasToken) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        if (
+          typeof window !== "undefined" &&
+          !window.location.pathname.startsWith("/login") &&
+          !window.location.pathname.startsWith("/signup")
+        ) {
+          window.location.href = "/login";
+        }
+      }
     }
     return Promise.reject(error);
   }

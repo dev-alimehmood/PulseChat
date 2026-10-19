@@ -9,11 +9,13 @@ import { useAuth } from "../../context/auth";
 import api from "../../services/api";
 import { successtoast, errortoast } from "../../toastify/toastify";
 import ModalWrapper from "../shared/ModalWrapper";
+import ImageCropperModal from "./ImageCropperModal";
 
 const ProfileModal = ({ user, onClose }) => {
   const [Auth, setAuth] = useAuth();
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showCropperModal, setShowCropperModal] = useState(false);
   const [togglingBlock, setTogglingBlock] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
 
@@ -72,41 +74,35 @@ const ProfileModal = ({ user, onClose }) => {
     }
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64String = reader.result;
-        let finalUrl = base64String;
-        try {
-          const { data } = await api.post("/messages/upload-image", { image: base64String });
-          if (data.Location) {
-            finalUrl = data.Location;
-          }
-        } catch (error) {
-          finalUrl = base64String;
+  const handleSaveCroppedPhoto = async (croppedBase64) => {
+    if (!isMe || !croppedBase64) return;
+    try {
+      let finalUrl = croppedBase64;
+      try {
+        const { data } = await api.post("/messages/upload-image", { image: croppedBase64 });
+        if (data.Location) {
+          finalUrl = data.Location;
         }
+      } catch (error) {
+        console.warn("S3 upload fallback to base64:", error);
+        finalUrl = croppedBase64;
+      }
 
-        setFormData((prev) => ({ ...prev, profilepicture: finalUrl }));
+      setFormData((prev) => ({ ...prev, profilepicture: finalUrl }));
 
-        if (isMe) {
-          try {
-            const { data } = await api.put("/users/profile", { ...formData, profilepicture: finalUrl });
-            const updatedUser = data?.success?.user || data?.user || { ...Auth.User, ...formData, profilepicture: finalUrl };
-            setAuth((prev) => ({
-              ...prev,
-              User: { ...prev.User, ...updatedUser },
-            }));
-            localStorage.setItem("user", JSON.stringify({ ...Auth.User, ...updatedUser }));
-            setFormData((prev) => ({ ...prev, profilepicture: updatedUser.profilepicture || finalUrl }));
-            successtoast("Profile photo updated!");
-          } catch (err) {
-            console.error(err);
-          }
-        }
-      };
-      reader.readAsDataURL(file);
+      const { data } = await api.put("/users/profile", { ...formData, profilepicture: finalUrl });
+      const updatedUser = data?.success?.user || data?.user || { ...Auth.User, ...formData, profilepicture: finalUrl };
+      setAuth((prev) => ({
+        ...prev,
+        User: { ...prev.User, ...updatedUser },
+      }));
+      localStorage.setItem("user", JSON.stringify({ ...Auth.User, ...updatedUser }));
+      setFormData((prev) => ({ ...prev, profilepicture: updatedUser.profilepicture || finalUrl }));
+      successtoast("Profile photo updated successfully!");
+      setShowCropperModal(false);
+    } catch (err) {
+      console.error("Failed to update profile photo", err);
+      errortoast(err.response?.data?.error || "Failed to update profile photo");
     }
   };
 
@@ -211,13 +207,14 @@ const ProfileModal = ({ user, onClose }) => {
 
                 {/* Camera upload overlay for logged-in user */}
                 {isMe && (
-                  <label
-                    title="Upload profile photo"
+                  <button
+                    type="button"
+                    onClick={() => setShowCropperModal(true)}
+                    title="Change profile photo (Camera or Adjust)"
                     className="absolute -bottom-1.5 -right-1.5 w-9 h-9 rounded-2xl bg-gradient-to-tr from-[#6366f1] to-[#38bdf8] text-white flex items-center justify-center shadow-lg shadow-[#38bdf8]/30 cursor-pointer hover:scale-110 active:scale-95 transition-all border-2 border-white dark:border-slate-800 z-30"
                   >
                     <Camera className="w-4 h-4" />
-                    <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
-                  </label>
+                  </button>
                 )}
               </div>
 
@@ -464,6 +461,17 @@ const ProfileModal = ({ user, onClose }) => {
           </div>
         </div>
       </div>
+
+      {/* Interactive Photo Cropper, Adjuster & Camera Modal */}
+      {showCropperModal && (
+        <ImageCropperModal
+          isOpen={showCropperModal}
+          onClose={() => setShowCropperModal(false)}
+          onSave={handleSaveCroppedPhoto}
+          currentPhoto={displayPhoto}
+          currentName={displayName}
+        />
+      )}
     </ModalWrapper>
   );
 };

@@ -22,6 +22,20 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(clients.claim());
 });
 
+// PWA Installability & Fetch Handling
+self.addEventListener("fetch", (event) => {
+  if (
+    event.request.method !== "GET" ||
+    event.request.url.includes("/api/") ||
+    event.request.url.includes("socket.io")
+  ) {
+    return;
+  }
+  event.respondWith(
+    fetch(event.request).catch(() => caches.match(event.request))
+  );
+});
+
 // Client communication: sync active conversation and focus state
 self.addEventListener("message", (event) => {
   const data = event.data;

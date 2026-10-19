@@ -16,7 +16,11 @@ const NewChatModal = ({ onSelectUser, onClose, onOpenInvite }) => {
   const loggedInUserId = Auth?.User?._id;
 
   useEffect(() => {
-    inputRef.current?.focus();
+    // Only auto-focus on desktop; keep mobile keyboard closed until user taps search
+    const isMobile = typeof window !== "undefined" && (window.innerWidth < 768 || "ontouchstart" in window);
+    if (!isMobile) {
+      inputRef.current?.focus();
+    }
   }, []);
 
   useEffect(() => {

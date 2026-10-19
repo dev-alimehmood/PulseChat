@@ -1,0 +1,36 @@
+{
+  "name": "PulseChat — Real-Time Encrypted Messaging",
+  "short_name": "PulseChat",
+  "description": "High-Speed Real-Time Encrypted Messaging with Stealth Privacy, Waveform Audio, and Cloud Media Pipelines.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0c1228",
+  "theme_color": "#0c1228",
+  "icons": [
+    {
+      "src": "/favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["social", "communication", "productivity"]
+}
