@@ -11,9 +11,9 @@ import jwt from 'jsonwebtoken'
 import bcryptjs from 'bcryptjs'
 import { nanoid } from 'nanoid'
 import nodemailer from "nodemailer";
-import crypto from "crypto";
 import Conversation from "../models/conversation.js";
 import Message from "../models/message.js";
+import { io, onlineUsers } from "../server.js";
 
 
 const pvalidator = new Schema
@@ -27,9 +27,10 @@ pvalidator
   .is().not().oneOf(['Passw0rd', 'Password123']); // Blacklist these values
 
 // 1) sent verification link to emailadress /api/v1/pre-sign-up
+// 1) sent verification link to emailadress /api/v1/pre-sign-up
 const preSignup = async (req, res) => {
   try {
-    const { full_name, email, password, confirm_password } = req.body
+    const { full_name, email, password, confirm_password, refUserId } = req.body
     const existemail = await user.findOne({ email })
 
     // email exist to nahi karti
@@ -41,9 +42,8 @@ const preSignup = async (req, res) => {
       return warning("Password must be 8 to 30 digits,should have 1 uppercase letter,1lowercase letter,and should have 2 digits", res)
     }
 
-    // ab ham in sab ka token create karan ga 
-    const token = jwt.sign({ full_name, email, password }, JWT_SECRET, { expiresIn: "4h" })
-    console.log(token)
+    // Include refUserId in token if registered via invite
+    const token = jwt.sign({ full_name, email, password, refUserId: refUserId || null }, JWT_SECRET, { expiresIn: "4h" })
     
     const transporter = nodemailer.createTransport({
       service: "Gmail",
@@ -53,43 +53,85 @@ const preSignup = async (req, res) => {
       },
     });
     await transporter.sendMail({
-      from: `"ChatMe" <no-reply@chatme.com>`,
+      from: `"PulseChat" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "Verify Your Email",
-      html: `<p > <a href="${CLIENT_URL}/${token}" style="font-size:12px; color:yellow; hover:text-blue; focus:text-orange letter-spacing:8px" > ${token} </a> </p>`,
-    }
-    
-    );
-       success(" we have sent you a verification link please check your email address ",res)
-      
+      subject: "Verify Your Email - PulseChat",
+      html: `<div style="font-family: sans-serif; padding: 20px; background: #0c1228; color: #f8fafc; border-radius: 12px;">
+        <h2 style="color: #38bdf8;">Welcome to PulseChat!</h2>
+        <p>Please click the button below to verify your email and activate your account:</p>
+        <p style="margin: 24px 0;">
+          <a href="${CLIENT_URL}/${token}" style="background: linear-gradient(135deg, #6366f1, #38bdf8); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+            Activate Account
+          </a>
+        </p>
+        <p style="font-size: 12px; color: #94a3b8;">If you did not sign up for PulseChat, you can safely ignore this email.</p>
+      </div>`,
+    });
+
+    success("We have sent you a verification link, please check your email address", res)
   }
   catch (err) {
     catchErr(err, res)
   }
-
 }
 
 // 2) create new account after decode the token /api/v1/signup
 const signup = async (req, res) => {
   try {
     const token = req.body.token
-    const { full_name, email, password } = jwt.verify(token, JWT_SECRET)
+    const { full_name, email, password, refUserId } = jwt.verify(token, JWT_SECRET)
     // encrypt the password before saving into database
     const salt = await bcryptjs.genSalt(12)
     const hashpassword = await bcryptjs.hash(password, salt)
     const emailfound = await user.findOne({ email })
     if (emailfound) {
-      return error(`This email ${email} is already registered,may be you click on link again`, res)
+      return error(`This email ${email} is already registered, may be you clicked on link again`, res)
     }
     // now finally create the account
-    await user({
+    const newUser = await user({
       full_name,
       email,
       password: hashpassword
     }).save()
 
-    success(`${full_name} your account have been created`, res)
+    // If registered via an invite, auto-connect with the inviter!
+    if (refUserId) {
+      try {
+        const inviter = await user.findById(refUserId);
+        if (inviter) {
+          let conv = await Conversation.findOne({
+            participants: { $all: [inviter._id, newUser._id] },
+          });
+          if (!conv) {
+            conv = await Conversation.create({
+              participants: [inviter._id, newUser._id],
+            });
+          }
+          const welcomeMsg = await Message.create({
+            conversationId: conv._id,
+            sender: inviter._id,
+            text: `👋 Hey ${full_name}! Welcome to PulseChat. Glad you accepted my invite!`,
+            status: "delivered",
+            deliveredTo: [newUser._id],
+          });
+          conv.lastMessage = welcomeMsg._id;
+          await conv.save();
 
+          // Notify inviter via socket if online
+          const inviterSocket = onlineUsers.get(inviter._id.toString());
+          if (inviterSocket) {
+            io.to(inviterSocket).emit("conversationUpdated", {
+              conversationId: conv._id.toString(),
+              lastMessage: welcomeMsg.text,
+            });
+          }
+        }
+      } catch (inviteConnectErr) {
+        console.error("Auto-connect on invite error:", inviteConnectErr);
+      }
+    }
+
+    success(`${full_name} your account has been created`, res)
   }
   catch (err) {
     catchErr(err, res)
@@ -410,16 +452,30 @@ const toggleBlockUser = async (req, res) => {
     if (String(userId) === String(blockUserId)) return error("You cannot block yourself", res);
 
     const currentUser = await user.findById(userId);
-    const isBlocked = currentUser.blockedUsers.includes(blockUserId);
+    if (!currentUser) return error("User not found", res);
+
+    if (!currentUser.blockedUsers) {
+      currentUser.blockedUsers = [];
+    }
+
+    const isBlocked = currentUser.blockedUsers.some(b => String(b) === String(blockUserId));
 
     if (isBlocked) {
       currentUser.blockedUsers.pull(blockUserId);
       await currentUser.save();
-      success({ message: "User unblocked successfully", isBlocked: false }, res);
+      success({ 
+        message: "User unblocked successfully", 
+        isBlocked: false, 
+        blockedUsers: currentUser.blockedUsers 
+      }, res);
     } else {
       currentUser.blockedUsers.push(blockUserId);
       await currentUser.save();
-      success({ message: "User blocked successfully", isBlocked: true }, res);
+      success({ 
+        message: "User blocked successfully", 
+        isBlocked: true, 
+        blockedUsers: currentUser.blockedUsers 
+      }, res);
     }
   } catch (err) {
     catchErr(err, res);

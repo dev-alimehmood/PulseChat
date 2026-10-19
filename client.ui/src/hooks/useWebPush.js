@@ -1,16 +1,15 @@
 import { useEffect, useCallback } from "react";
 import api from "../services/api";
 import { useAuth } from "../context/auth";
-import { toast } from "react-toastify";
 
-// Replace with the VAPID_PUBLIC_KEY from the server
-const PUBLIC_VAPID_KEY = import.meta.env.VITE_PUBLIC_VAPID_KEY;
+// VAPID_PUBLIC_KEY from environment or default matching server
+const PUBLIC_VAPID_KEY =
+  import.meta.env.VITE_PUBLIC_VAPID_KEY ||
+  "BM8roNvRt-loHBY71YOPSC1N7OteNGrSkQtcQx5xIooJro9aymMpKQ1z6yViD0mtsII-GRryLMhLBXiNCg0D2pE";
 
 function urlBase64ToUint8Array(base64String) {
-  const padding = "=".repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding)
-    .replace(/\-/g, "+")
-    .replace(/_/g, "/");
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
 
   const rawData = window.atob(base64);
   const outputArray = new Uint8Array(rawData.length);
@@ -27,8 +26,7 @@ export const useWebPush = () => {
 
   const subscribeToPush = useCallback(async () => {
     if (!loggedInUserId) return;
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      console.warn("Web Push is not supported in this browser.");
+    if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) {
       return;
     }
 
@@ -38,13 +36,12 @@ export const useWebPush = () => {
         scope: "/",
       });
 
-      // wait for it to be ready
+      // Wait for service worker to become active
       await navigator.serviceWorker.ready;
 
       // 2. Request Notification Permission
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
-        console.warn("Notification permission denied.");
         return;
       }
 
@@ -60,18 +57,13 @@ export const useWebPush = () => {
       // 4. Send subscription to Backend
       const subJSON = subscription.toJSON();
       await api.post("/users/push-subscribe", subJSON);
-      console.log("Successfully subscribed to Web Push Notifications");
-      // Optional: uncomment below to see the success toast
-      // toast.success("Push notifications enabled!");
-      
+      console.log("✅ Web Push registered and active.");
     } catch (err) {
-      console.error("Failed to subscribe to Web Push:", err);
-      toast.error("Failed to enable push notifications. See console.");
+      console.warn("Web Push registration error:", err);
     }
   }, [loggedInUserId]);
 
   useEffect(() => {
-    // Automatically try to subscribe when user is logged in
     if (loggedInUserId) {
       subscribeToPush();
     }

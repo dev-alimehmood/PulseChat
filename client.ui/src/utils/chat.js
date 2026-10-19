@@ -27,6 +27,45 @@ export const getInitials = (name = "") =>
     .toUpperCase()
     .slice(0, 2);
 
+/**
+ * Resolves avatar & media URLs so private S3 buckets and local media
+ * are properly routed through the streaming proxy with headers & caching
+ */
+export const resolveAvatarUrl = (url) => {
+  if (!url || typeof url !== "string") return "";
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+
+  // Data URLs and Blobs can be displayed directly
+  if (trimmed.startsWith("data:") || trimmed.startsWith("blob:")) {
+    return trimmed;
+  }
+
+  // Already proxied
+  if (trimmed.includes("/messages/stream-audio")) {
+    return trimmed;
+  }
+
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+
+  // If it's an S3 URL or stored in pulsechat-media
+  if (
+    trimmed.includes("s3.amazonaws.com") ||
+    trimmed.includes("s3.") ||
+    trimmed.includes("pulsechat-media")
+  ) {
+    return `${apiUrl}/messages/stream-audio?url=${encodeURIComponent(trimmed)}`;
+  }
+
+  // Relative URLs starting with /
+  if (trimmed.startsWith("/")) {
+    const host = apiUrl.replace(/\/api\/v1\/?$/, "");
+    return `${host}${trimmed}`;
+  }
+
+  return trimmed;
+};
+
 // ─── Time formatting ──────────────────────────────────────────────────────────
 
 /**
@@ -72,11 +111,13 @@ export const formatBubbleTime = (dateStr) => {
  * Returns: [{ label: "Today", messages: [...] }, ...]
  */
 export const groupMessagesByDate = (messages = []) => {
+  const safeMessages = Array.isArray(messages) ? messages : [];
   const groups = [];
   let currentLabel = null;
   let currentGroup = [];
 
-  messages.forEach((msg) => {
+  safeMessages.forEach((msg) => {
+    if (!msg) return;
     const label = getDateLabel(msg.createdAt);
 
     if (label !== currentLabel) {

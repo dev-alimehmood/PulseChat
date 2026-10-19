@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Info, Zap, ShieldCheck, Cpu, Users, Globe, MessageSquare, Mail, Phone, MapPin, ExternalLink, Heart, Server, Database, Code2, Rocket } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../../context/auth";
+import Avatar from "../../components/shared/Avatar";
 
 const AboutApp = () => {
     const [auth] = useAuth();
@@ -23,13 +24,14 @@ const AboutApp = () => {
           </div>
           
           <div className="flex items-center gap-4 ml-auto">
-             <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-md overflow-hidden">
-               {auth?.User?.profilepicture ? (
-                  <img src={auth.User.profilepicture} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  auth?.User?.full_name?.charAt(0) || 'A'
-                )}
-             </div>
+             <Avatar
+               src={auth?.User?.profilepicture}
+               name={auth?.User?.full_name}
+               id={auth?.User?._id}
+               size="w-8 h-8 text-xs"
+               rounded="rounded-full"
+               className="shadow-md"
+             />
           </div>
         </header>
 

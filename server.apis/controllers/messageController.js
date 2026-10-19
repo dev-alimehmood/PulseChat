@@ -9,9 +9,21 @@ import { AWSS3 } from "../config/aws.js";
 export const getMessages = async (req, res) => {
   try {
     const { conversationId } = req.params;
+    const currentUserId = req.user?._id;
+
+    // Filter out messages that were quarantined because the current user blocked the sender
+    const query = { conversationId };
+    if (currentUserId) {
+      query.$or = [
+        { quarantinedDuringBlock: { $ne: true } },
+        { sender: currentUserId }, // sender can always see their own sent messages
+      ];
+    } else {
+      query.quarantinedDuringBlock = { $ne: true };
+    }
 
     const messages = await Message
-      .find({ conversationId })
+      .find(query)
       .populate("sender", "_id full_name profilepicture")
       .populate({
         path: "replyTo",
@@ -45,16 +57,20 @@ export const sendMessage = async (req, res) => {
       (p) => p.toString() !== senderId.toString()
     );
 
-    // ✅ Block check
+    let isQuarantined = false;
+    let blockedByUser = null;
+
+    // Block check: If sender blocked receiver, prompt unblock. If receiver blocked sender, quarantine message.
     if (receiverId) {
       const senderUser = await User.findById(senderId);
       const receiverUser = await User.findById(receiverId);
 
       if (senderUser.blockedUsers?.includes(receiverId)) {
-        return res.status(403).json({ error: "You have blocked this user. Unblock them to send messages." });
+        return res.status(403).json({ error: "You have blocked this contact. Unblock them to send messages." });
       }
       if (receiverUser.blockedUsers?.includes(senderId)) {
-        return res.status(403).json({ error: "You are blocked now. Unblock this user to continue chatting." });
+        isQuarantined = true;
+        blockedByUser = receiverId;
       }
     }
 
@@ -66,6 +82,8 @@ export const sendMessage = async (req, res) => {
       replyTo: replyTo || null, // ✅ save reply reference
       audioUrl: audioUrl || "", // ✅ save audio reference
       image: image || "", // ✅ save image reference
+      quarantinedDuringBlock: isQuarantined,
+      blockedBy: blockedByUser,
     });
 
     await newMessage.populate("sender", "_id full_name profilepicture");
@@ -77,6 +95,11 @@ export const sendMessage = async (req, res) => {
         select: "_id full_name profilepicture",
       },
     }); // ✅ populate reply and reply sender
+
+    // If quarantined, sender sees message sent but receiver is NOT alerted or updated
+    if (isQuarantined) {
+      return res.status(201).json(newMessage);
+    }
 
     // update conversation lastMessage + unread
     conversation.lastMessage = newMessage._id;
@@ -130,24 +153,31 @@ export const sendMessage = async (req, res) => {
           }
 
           const payload = JSON.stringify({
-            title: `${senderName}`,
+            title: senderName,
             body: pushBody,
             icon: senderAvatar,
-            url: `/?chat=${conversationId}`,
-            conversationId: conversationId.toString()
+            url: `/chatpage?chat=${conversationId.toString()}`,
+            conversationId: conversationId.toString(),
+            messageId: newMessage._id.toString(),
+            senderId: senderId.toString(),
+            timestamp: newMessage.createdAt,
           });
 
-          // Run push notifications asynchronously to prevent blocking the API response
+          // Run push notifications asynchronously with high urgency
           (async () => {
             const validSubscriptions = [];
             let subscriptionsChanged = false;
 
             await Promise.all(receiverUser.pushSubscriptions.map(async (sub) => {
               try {
-                await webpush.sendNotification(sub, payload, { urgency: 'high' });
+                await webpush.sendNotification(sub, payload, {
+                  urgency: 'high',
+                  TTL: 86400,
+                  topic: 'chat',
+                });
                 validSubscriptions.push(sub);
               } catch (err) {
-                // 410 means subscription is no longer valid (e.g., user revoked permission)
+                // 410 or 404 means subscription is no longer valid (e.g. user revoked permission)
                 if (err.statusCode === 410 || err.statusCode === 404) {
                   console.log("Removing expired push subscription");
                   subscriptionsChanged = true;
@@ -538,6 +568,8 @@ export const streamAudio = async (req, res) => {
       if (headers['content-length']) res.set('Content-Length', headers['content-length']);
       if (headers['accept-ranges']) res.set('Accept-Ranges', headers['accept-ranges']);
       if (headers['content-range']) res.set('Content-Range', headers['content-range']);
+      // Enable client-side caching for media and avatars
+      res.set('Cache-Control', 'public, max-age=604800');
     });
 
     const s3Stream = request.createReadStream();
@@ -545,7 +577,7 @@ export const streamAudio = async (req, res) => {
     s3Stream.on('error', (err) => {
       console.error("streamAudio S3 Error:", err);
       if (!res.headersSent) {
-        res.status(404).send("Audio not found");
+        res.status(404).send("Media not found");
       }
     });
 
@@ -858,5 +890,65 @@ export const forwardMessage = async (req, res) => {
   } catch (error) {
     console.error("forwardMessage error:", error);
     res.status(500).json({ error: error.message });
+  }
+};
+
+// GET /api/v1/messages/:conversationId/quarantined-count
+export const getQuarantinedCount = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user._id;
+
+    const count = await Message.countDocuments({
+      conversationId,
+      quarantinedDuringBlock: true,
+      blockedBy: userId,
+    });
+
+    res.json({ count });
+  } catch (err) {
+    console.error("getQuarantinedCount error:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// POST /api/v1/messages/:conversationId/restore-quarantined
+export const restoreQuarantinedMessages = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user._id;
+
+    const result = await Message.updateMany(
+      {
+        conversationId,
+        quarantinedDuringBlock: true,
+        blockedBy: userId,
+      },
+      {
+        $set: {
+          quarantinedDuringBlock: false,
+          blockedBy: null,
+        },
+      }
+    );
+
+    // Update conversation lastMessage to the latest un-quarantined message
+    const latestMsg = await Message.findOne({ conversationId, isDeleted: false })
+      .sort({ createdAt: -1 });
+
+    if (latestMsg) {
+      await Conversation.findByIdAndUpdate(conversationId, {
+        lastMessage: latestMsg._id,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Quarantined messages restored successfully",
+      restoredCount: result.modifiedCount,
+    });
+  } catch (err) {
+    console.error("restoreQuarantinedMessages error:", err);
+    res.status(500).json({ error: err.message });
   }
 };

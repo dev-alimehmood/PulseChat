@@ -63,6 +63,15 @@ const messageSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    quarantinedDuringBlock: {
+      type: Boolean,
+      default: false,
+    },
+    blockedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
+      default: null,
+    },
   },
   { timestamps: true }
 );

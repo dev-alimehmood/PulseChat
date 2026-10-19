@@ -33,9 +33,14 @@ export const useMessages = (conversationId) => {
         const { data } = await api.get(`/messages/${conversationId}`, {
           signal: controller.signal,
         });
-        setMessages(data.messages || data);
+        const messageList = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.messages)
+          ? data.messages
+          : [];
+        setMessages(messageList);
       } catch (err) {
-        if (err.name !== "CanceledError") {
+        if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
           console.error("fetchMessages error:", err);
         }
       } finally {
@@ -391,5 +396,6 @@ export const useMessages = (conversationId) => {
     markAsDownloaded,
     reportScreenshotAttempt,
     forwardMessage,
+    refreshMessages,
   };
 };

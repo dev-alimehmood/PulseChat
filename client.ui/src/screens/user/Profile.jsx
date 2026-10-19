@@ -1,15 +1,49 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getInitials, avatarColor } from "../../utils/chat";
-import { X, MessageSquare, Clock, Calendar, Edit2, Check, User, MapPin, Phone, Camera, ShieldBan, Save } from "lucide-react";
+import Avatar from "../../components/shared/Avatar";
+import { 
+  ArrowLeft, Edit2, Check, User, MapPin, Phone, Camera, ShieldBan, Save, 
+  Trash2, Mail, Calendar, ShieldCheck, Sparkles, Loader2, RefreshCw
+} from "lucide-react";
 import { useAuth } from "../../context/auth";
 import api from "../../services/api";
 import { successtoast, errortoast } from "../../toastify/toastify";
 import { useNavigate, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
+
+// High-speed client-side image compressor keeping base64 under 100KB
+const compressImage = (file, maxWidth = 500, quality = 0.85) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const elem = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+        elem.width = width;
+        elem.height = height;
+        const ctx = elem.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(elem.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = (error) => reject(error);
+    };
+    reader.onerror = (error) => reject(error);
+  });
+};
 
 const Profile = () => {
   const [Auth, setAuth] = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const fileInputRef = useRef(null);
   
   const targetUser = location.state?.user || Auth?.User;
   const isMe = String(Auth?.User?._id) === String(targetUser?._id);
@@ -18,6 +52,7 @@ const Profile = () => {
   const [bg, fg] = avatarColor(user?._id || "");
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // Editable fields
   const [formData, setFormData] = useState({
@@ -28,7 +63,6 @@ const Profile = () => {
     profilepicture: user?.profilepicture || ""
   });
   
-  // Track new image selection specifically for base64 before saving
   const [newImagePreview, setNewImagePreview] = useState(null);
 
   useEffect(() => {
@@ -45,46 +79,91 @@ const Profile = () => {
 
   if (!user) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-[#07090e]">
+        <div className="w-10 h-10 border-4 border-[#38bdf8] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
+
+  const handleImageSelect = async (e) => {
+    if (!isMe) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingPhoto(true);
+      const compressed = await compressImage(file);
+      setNewImagePreview(compressed);
+
+      // Attempt immediate upload
+      let finalUrl = compressed;
+      try {
+        const { data: uploadData } = await api.post("/messages/upload-image", { image: compressed });
+        if (uploadData.Location) {
+          finalUrl = uploadData.Location;
+        }
+      } catch (uploadError) {
+        // Fallback: save compressed base64 directly to user profile
+        console.warn("S3 upload failed, falling back to compressed base64:", uploadError);
+        finalUrl = compressed;
+      }
+
+      // Save directly to profile for immediate seamless update
+      const updatedFormData = { ...formData, profilepicture: finalUrl };
+      const { data } = await api.put("/users/profile", updatedFormData);
+      const updatedUser = data?.success?.user || data?.user || { ...Auth.User, ...updatedFormData };
+      setAuth((prev) => ({
+        ...prev,
+        User: { ...prev.User, ...updatedUser }
+      }));
+      localStorage.setItem("user", JSON.stringify({ ...Auth.User, ...updatedUser }));
+      setFormData((prev) => ({ ...prev, profilepicture: updatedUser.profilepicture || finalUrl }));
+      setNewImagePreview(null);
+      successtoast("Profile picture updated!");
+    } catch (err) {
+      console.error("Failed to process image", err);
+      errortoast("Failed to update profile picture");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    if (!isMe) return;
+    setSaving(true);
+    try {
+      const updatedFormData = { ...formData, profilepicture: "" };
+      const { data } = await api.put("/users/profile", updatedFormData);
+      const updatedUser = data?.success?.user || data?.user || { ...Auth.User, ...updatedFormData };
+      setAuth((prev) => ({
+        ...prev,
+        User: { ...prev.User, ...updatedUser, profilepicture: "" }
+      }));
+      localStorage.setItem("user", JSON.stringify({ ...Auth.User, ...updatedUser, profilepicture: "" }));
+      setFormData((prev) => ({ ...prev, profilepicture: "" }));
+      setNewImagePreview(null);
+      successtoast("Profile picture removed");
+    } catch (err) {
+      errortoast("Failed to remove profile picture");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!isMe) return;
     setSaving(true);
     try {
-      let finalImageUrl = formData.profilepicture;
-      
-      // If there's a new image selected locally, upload it first
-      if (newImagePreview && newImagePreview !== formData.profilepicture) {
-        try {
-          const { data: uploadData } = await api.post("/messages/upload-image", { image: newImagePreview });
-          if (uploadData.Location) {
-            finalImageUrl = uploadData.Location;
-          }
-        } catch (uploadError) {
-          errortoast("Failed to upload profile picture");
-          setSaving(false);
-          return;
-        }
-      }
-
-      const updatedFormData = { ...formData, profilepicture: finalImageUrl };
-
+      const updatedFormData = { ...formData };
       const { data } = await api.put("/users/profile", updatedFormData);
       if (data.success && data.success.user) {
-        // Update auth context with new user data
         setAuth((prev) => ({
           ...prev,
           User: { ...prev.User, ...data.success.user }
         }));
-        // Update local storage
         localStorage.setItem("user", JSON.stringify({ ...Auth.User, ...data.success.user }));
-        successtoast(data.success.message || "Profile updated successfully");
+        successtoast("Profile updated successfully!");
         setFormData(updatedFormData);
-        setNewImagePreview(null);
         setEditMode(false);
       } else if (data.error) {
         errortoast(data.error);
@@ -97,222 +176,293 @@ const Profile = () => {
     }
   };
 
-  const handleImageSelect = (e) => {
-    if (!isMe) return;
-    const file = e.target.files[0];
-    if (file) {
-      // Create a local preview immediately for UX
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleBlockUser = async () => {
-    try {
-      const { data } = await api.post(`/auth/block/${user._id}`);
-      if (data.success) {
-        successtoast(data.success.message);
-        navigate("/");
-      }
-    } catch (err) {
-      errortoast("Failed to block user");
-    }
-  };
+  const currentDisplayPhoto = newImagePreview || formData.profilepicture;
 
   return (
-    <div className="h-full w-full overflow-y-auto bg-slate-50 dark:bg-[#0b141a] text-slate-900 dark:text-slate-100 p-4 md:p-8 custom-scrollbar relative">
-      {/* Background elements */}
-      <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-primary-500/20 to-transparent pointer-events-none" />
+    <div className="h-full w-full overflow-y-auto bg-slate-50 dark:bg-[#07090e] text-slate-900 dark:text-slate-100 p-4 sm:p-6 md:p-10 custom-scrollbar relative selection:bg-[#38bdf8]/30 transition-colors duration-500">
       
-      <div className="max-w-3xl mx-auto relative z-10">
+      {/* Ambient background glow matching Landing Page */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-80 bg-gradient-to-b from-[#6366f1]/15 via-[#38bdf8]/10 to-transparent blur-3xl pointer-events-none" />
+
+      <div className="max-w-4xl mx-auto relative z-10">
         
-        {/* Header */}
+        {/* Navigation Bar */}
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Your Profile</h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Manage your personal information and preferences.</p>
-          </div>
-          
-          {!editMode ? (
-            <button
-              onClick={() => setEditMode(true)}
-              className="flex items-center gap-2 rounded-xl bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-600 transition-colors hover:bg-primary-100 dark:bg-primary-900/30 dark:text-primary-400 dark:hover:bg-primary-900/50"
-            >
-              <Edit2 className="w-4 h-4" /> Edit
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                setEditMode(false);
-                setNewImagePreview(null);
-              }}
-              className="flex items-center gap-2 rounded-xl bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-            >
-              <X className="w-4 h-4" /> Cancel
-            </button>
+          <button
+            onClick={() => navigate("/chatpage")}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-[#0e1630]/80 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-[#38bdf8]/50 transition-all backdrop-blur-md shadow-sm text-xs sm:text-sm font-semibold"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Workspace</span>
+          </button>
+
+          {isMe && (
+            <div className="flex items-center gap-3">
+              {!editMode ? (
+                <button
+                  onClick={() => setEditMode(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-gradient-to-r from-[#4f46e5] to-[#38bdf8] text-white shadow-md shadow-indigo-500/25 hover:opacity-95 transition-all"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  <span>Edit Profile</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setEditMode(false);
+                    setNewImagePreview(null);
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs sm:text-sm font-medium border border-slate-200/80 dark:border-white/10 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           )}
         </div>
 
         {/* Profile Card */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-10 shadow-sm backdrop-blur-xl">
+        <div className="bg-white/90 dark:bg-[#0c1228]/90 border border-slate-200/90 dark:border-white/10 rounded-3xl p-6 sm:p-8 md:p-10 shadow-xl backdrop-blur-2xl transition-all duration-300">
           
-          {/* Avatar Section */}
-          <div className="flex flex-col items-center sm:flex-row sm:items-start gap-6 md:gap-10">
+          {/* Header Row: Avatar & Identity */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8 pb-8 border-b border-slate-100 dark:border-white/5">
             
+            {/* Avatar with Camera Trigger */}
             <div className="relative group shrink-0">
-              <div
-                className="w-32 h-32 md:w-40 md:h-40 rounded-full flex items-center justify-center text-5xl md:text-6xl font-bold shadow-xl ring-4 ring-white dark:ring-slate-950 overflow-hidden"
-                style={{ background: bg, color: fg }}
-              >
-                {(newImagePreview || formData.profilepicture) ? (
-                  <img src={newImagePreview || formData.profilepicture} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  getInitials(user?.full_name)
-                )}
-                
-                {editMode && (
-                  <label className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
-                    <Camera className="w-8 h-8 mb-2" />
-                    <span className="text-xs font-bold tracking-wider uppercase">Change Photo</span>
-                    <input type="file" className="hidden" accept="image/*" onChange={handleImageSelect} />
-                  </label>
+              <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl shadow-2xl ring-4 ring-slate-100 dark:ring-[#07090e] overflow-hidden border border-white/20">
+                <Avatar
+                  src={currentDisplayPhoto}
+                  name={user?.full_name}
+                  id={user?._id}
+                  size="w-full h-full text-4xl sm:text-5xl"
+                  rounded="rounded-3xl"
+                  alt="Profile"
+                />
+
+                {uploadingPhoto && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white backdrop-blur-xs z-20">
+                    <Loader2 className="w-8 h-8 animate-spin" />
+                  </div>
                 )}
               </div>
+
+              {/* Camera Upload Badge */}
+              {isMe && (
+                <>
+                  <label
+                    title="Change Profile Photo"
+                    className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-white flex items-center justify-center shadow-lg shadow-[#38bdf8]/30 cursor-pointer hover:scale-110 active:scale-95 transition-all border-2 border-white dark:border-[#0c1228]"
+                  >
+                    <Camera className="w-5 h-5" />
+                    <input 
+                      ref={fileInputRef}
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleImageSelect} 
+                      className="hidden" 
+                    />
+                  </label>
+                </>
+              )}
             </div>
 
-            <div className="flex-1 flex flex-col text-center sm:text-left mt-2 sm:mt-0 w-full">
+            {/* Identity Info */}
+            <div className="flex-1 text-center sm:text-left min-w-0 w-full">
               {editMode ? (
-                <div className="space-y-4 w-full">
+                <div className="space-y-4">
                   <div>
-                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Full Name</label>
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">
+                      Full Name
+                    </label>
                     <input
                       type="text"
                       value={formData.full_name}
                       onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                      className="w-full text-lg font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-500 outline-none transition-all"
-                      placeholder="Your Name"
+                      className="w-full text-base sm:text-lg font-bold bg-slate-100/80 dark:bg-[#070b18] border border-slate-200/80 dark:border-white/10 rounded-2xl px-4 py-3 outline-none focus:border-[#38bdf8] transition-all text-slate-900 dark:text-white"
+                      placeholder="Your Full Name"
                     />
                   </div>
+
                   <div>
-                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Bio</label>
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">
+                      Bio
+                    </label>
                     <textarea
                       value={formData.bio}
                       onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none transition-all resize-none"
-                      placeholder="Write something about yourself..."
                       rows={3}
+                      className="w-full text-sm bg-slate-100/80 dark:bg-[#070b18] border border-slate-200/80 dark:border-white/10 rounded-2xl px-4 py-3 outline-none focus:border-[#38bdf8] transition-all text-slate-900 dark:text-white resize-none"
+                      placeholder="Write a brief bio..."
                     />
                   </div>
                 </div>
               ) : (
                 <>
-                  <h2 className="text-3xl font-bold tracking-tight mb-1">{user?.full_name || 'Unknown User'}</h2>
-                  <p className="text-primary-500 font-medium mb-4">{user?.email}</p>
-                  
-                  <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl p-4">
-                    <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">About</h3>
-                    <p className="text-sm leading-relaxed">{user?.bio || "Hey there! I am using PulseChat."}</p>
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 mb-1.5">
+                    <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                      {user?.full_name || "Unknown User"}
+                    </h2>
+                    {user?.isadmin && (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                        ADMIN
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-4 flex items-center justify-center sm:justify-start gap-2">
+                    <Mail className="w-4 h-4 text-[#38bdf8]" />
+                    <span>{user?.email}</span>
+                  </p>
+
+                  <div className="p-4 rounded-2xl bg-slate-100/70 dark:bg-[#080d1e]/80 border border-slate-200/70 dark:border-white/5">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                      About
+                    </p>
+                    <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                      {user?.bio || "No bio added yet."}
+                    </p>
                   </div>
                 </>
+              )}
+
+              {/* Photo Actions if photo exists */}
+              {isMe && currentDisplayPhoto && (
+                <div className="mt-3 flex items-center justify-center sm:justify-start gap-3">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-xs font-semibold text-[#38bdf8] hover:underline flex items-center gap-1"
+                  >
+                    <Camera className="w-3.5 h-3.5" /> Change Photo
+                  </button>
+                  <span className="text-slate-400 dark:text-slate-600">•</span>
+                  <button
+                    onClick={handleRemovePhoto}
+                    className="text-xs font-semibold text-rose-500 hover:underline flex items-center gap-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Remove
+                  </button>
+                </div>
               )}
             </div>
           </div>
 
-          <div className="h-px w-full bg-slate-100 dark:bg-slate-800 my-8"></div>
-
-          {/* Details Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Details Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-8">
             
-            <div className="space-y-6">
-              <div className="flex gap-4">
-                <div className="w-12 h-12 shrink-0 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-500">
-                  <MapPin className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">City / Location</p>
-                  {editMode ? (
-                     <input
-                       type="text"
-                       value={formData.city}
-                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                       className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
-                       placeholder="Enter your city"
-                     />
-                  ) : (
-                    <p className="font-semibold text-lg truncate">{user?.city || "Not set"}</p>
-                  )}
-                </div>
+            {/* Location */}
+            <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50/80 dark:bg-[#080d1e]/60 border border-slate-200/70 dark:border-white/5">
+              <div className="w-11 h-11 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-500 shrink-0">
+                <MapPin className="w-5 h-5" />
               </div>
-
-              <div className="flex gap-4">
-                <div className="w-12 h-12 shrink-0 rounded-2xl bg-green-50 dark:bg-green-500/10 flex items-center justify-center text-green-500">
-                  <Phone className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Phone Number</p>
-                  {editMode ? (
-                     <input
-                       type="text"
-                       value={formData.phonenumber}
-                       onChange={(e) => setFormData({ ...formData, phonenumber: e.target.value })}
-                       className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
-                       placeholder="Enter phone number"
-                     />
-                  ) : (
-                    <p className="font-semibold text-lg truncate">{user?.phonenumber || "Not set"}</p>
-                  )}
-                </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                  City / Location
+                </p>
+                {editMode ? (
+                  <input
+                    type="text"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className="w-full bg-white dark:bg-[#070b18] border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#38bdf8] text-slate-900 dark:text-white"
+                    placeholder="e.g. San Francisco, CA"
+                  />
+                ) : (
+                  <p className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white truncate">
+                    {user?.city || "Not provided"}
+                  </p>
+                )}
               </div>
             </div>
 
-            <div className="space-y-6">
-               <div className="flex gap-4">
-                <div className="w-12 h-12 shrink-0 rounded-2xl bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center text-purple-500">
-                  <Calendar className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Member Since</p>
-                  <p className="font-semibold text-lg">{user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</p>
-                </div>
+            {/* Phone */}
+            <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50/80 dark:bg-[#080d1e]/60 border border-slate-200/70 dark:border-white/5">
+              <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 shrink-0">
+                <Phone className="w-5 h-5" />
               </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                  Phone Number
+                </p>
+                {editMode ? (
+                  <input
+                    type="text"
+                    value={formData.phonenumber}
+                    onChange={(e) => setFormData({ ...formData, phonenumber: e.target.value })}
+                    className="w-full bg-white dark:bg-[#070b18] border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#38bdf8] text-slate-900 dark:text-white"
+                    placeholder="+1 (555) 000-0000"
+                  />
+                ) : (
+                  <p className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white truncate">
+                    {user?.phonenumber || "Not provided"}
+                  </p>
+                )}
+              </div>
+            </div>
 
-              <div className="flex gap-4">
-                <div className="w-12 h-12 shrink-0 rounded-2xl bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center text-orange-500">
-                  <User className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Account Status</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"></span>
-                    <span className="font-semibold text-lg">Active</span>
-                  </div>
+            {/* Member Since */}
+            <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50/80 dark:bg-[#080d1e]/60 border border-slate-200/70 dark:border-white/5">
+              <div className="w-11 h-11 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500 shrink-0">
+                <Calendar className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                  Pulse Network Member
+                </p>
+                <p className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
+                  {user?.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : 'Verified Member'}
+                </p>
+              </div>
+            </div>
+
+            {/* Presence & Security */}
+            <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50/80 dark:bg-[#080d1e]/60 border border-slate-200/70 dark:border-white/5">
+              <div className="w-11 h-11 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400 shrink-0">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                  Security Status
+                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#2dd4bf] shadow-[0_0_8px_#2dd4bf]" />
+                  <span className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
+                    Active & Protected
+                  </span>
                 </div>
               </div>
             </div>
 
           </div>
-          
+
+          {/* Action Buttons for Edit Mode */}
           {editMode && (
-            <div className="mt-10 flex justify-end">
-               <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold transition-all duration-300 bg-primary-500 text-white hover:bg-primary-600 shadow-lg shadow-primary-500/30 hover:-translate-y-1 disabled:opacity-70 disabled:hover:translate-y-0"
-                >
-                  {saving ? (
-                    <div className="flex items-center gap-2">
-                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                       Saving...
-                    </div>
-                  ) : (
-                    <>
-                      <Save className="w-5 h-5" /> Save Changes
-                    </>
-                  )}
-                </button>
+            <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-end gap-3">
+              <button
+                onClick={() => {
+                  setEditMode(false);
+                  setNewImagePreview(null);
+                }}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-[#4f46e5] to-[#38bdf8] text-white shadow-lg shadow-indigo-500/25 hover:opacity-95 transition-all disabled:opacity-50"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save Changes</span>
+                  </>
+                )}
+              </button>
             </div>
           )}
 
