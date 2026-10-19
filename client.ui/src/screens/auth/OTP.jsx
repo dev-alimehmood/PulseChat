@@ -88,31 +88,31 @@ const OTP = () => {
       cardSubtitle="Type in the 5-digit security code dispatched to your registered email address."
       heroWidget={otpHeroWidget}
     >
-      <form onSubmit={otphandler} className="space-y-6">
+      <form onSubmit={otphandler} className="space-y-4 sm:space-y-4.5">
         
         {/* Visual Key Emblem */}
         <div className="flex justify-center">
           <div className="relative">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#6366f1]/20 via-[#38bdf8]/20 to-[#2dd4bf]/20 border border-[#38bdf8]/40 flex items-center justify-center text-[#38bdf8] shadow-[0_0_25px_rgba(56,189,248,0.25)]">
-              <KeyRound className="w-7 h-7" />
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#6366f1]/20 via-[#38bdf8]/20 to-[#2dd4bf]/20 border border-[#38bdf8]/40 flex items-center justify-center text-[#38bdf8] shadow-[0_0_20px_rgba(56,189,248,0.2)]">
+              <KeyRound className="w-6 h-6" />
             </div>
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-white dark:border-[#0c1228]" />
           </div>
         </div>
 
         {/* OTP Input Container */}
-        <div className="flex justify-center w-full py-2" dir="ltr">
+        <div className="flex justify-center w-full py-1" dir="ltr">
           <OtpInput
             value={user.otp}
             onChange={changeHandler}
             numInputs={5}
             shouldAutoFocus
             inputType="tel"
-            renderSeparator={<span className="w-2 sm:w-3" />}
+            renderSeparator={<span className="w-2 sm:w-2.5" />}
             renderInput={(props) => (
               <input
                 {...props}
-                className="!w-12 h-14 sm:!w-14 sm:h-16 bg-slate-50 dark:bg-[#0f152d]/90 rounded-2xl border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-2xl font-black font-mono text-center focus:outline-none focus:ring-2 focus:ring-[#38bdf8]/30 focus:border-[#38bdf8] focus:bg-white dark:focus:bg-[#131b3b] transition-all duration-300 shadow-sm"
+                className="!w-11 h-13 sm:!w-13 sm:h-14 bg-slate-50 dark:bg-[#0f152d]/90 rounded-2xl border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xl sm:text-2xl font-black font-mono text-center focus:outline-none focus:ring-2 focus:ring-[#38bdf8]/30 focus:border-[#38bdf8] focus:bg-white dark:focus:bg-[#131b3b] transition-all duration-300 shadow-sm"
               />
             )}
             containerStyle="flex justify-center items-center"
@@ -125,11 +125,11 @@ const OTP = () => {
           whileTap={{ scale: 0.98 }}
           type="submit"
           disabled={loading || user.otp.length < 5}
-          className="w-full bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-slate-950 font-bold py-3.5 rounded-2xl shadow-[0_0_25px_rgba(45,212,191,0.35)] hover:shadow-[0_0_40px_rgba(45,212,191,0.55)] transition-all duration-300 flex justify-center items-center gap-2 text-sm disabled:opacity-40 disabled:cursor-not-allowed group cursor-pointer"
+          className="w-full bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-slate-950 font-bold py-3 rounded-2xl shadow-[0_0_25px_rgba(45,212,191,0.35)] hover:shadow-[0_0_40px_rgba(45,212,191,0.55)] transition-all duration-300 flex justify-center items-center gap-2 text-sm disabled:opacity-40 disabled:cursor-not-allowed group cursor-pointer"
         >
           {loading ? (
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
               <span>Verifying Code...</span>
             </div>
           ) : (
@@ -141,7 +141,7 @@ const OTP = () => {
         </motion.button>
 
         {/* Resend & Back Navigation */}
-        <div className="pt-4 border-t border-slate-200/80 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+        <div className="pt-3.5 border-t border-slate-200/80 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
           <div>
             Didn't receive code?{" "}
             {resendCooldown > 0 ? (

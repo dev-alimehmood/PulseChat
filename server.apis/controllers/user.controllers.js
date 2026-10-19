@@ -48,7 +48,8 @@ const preSignup = async (req, res) => {
     
     await sendPulseEmail({
       to: email,
-      subject: "Verify Your Email Address — PulseChat",
+      subject: "[PulseChat] Activate Your Encrypted Account",
+      title: "PulseChat Account Activation",
       headline: "Welcome to PulseChat!",
       bodyHtml: `<p>Hello <strong>${full_name}</strong>,</p><p>Thank you for creating an account on PulseChat. Please click the button below to verify your email address and activate your encrypted workspace:</p>`,
       actionUrl: `${CLIENT_URL}/${token}`,
@@ -176,11 +177,12 @@ const forgetPassword = async (req, res) => {
 
     await sendPulseEmail({
       to: email,
-      subject: "Your Password Reset Code — PulseChat",
-      headline: "Reset Your Password",
-      bodyHtml: `<p>We received a request to reset the password for your PulseChat account. Enter the verification passcode below to continue with password recovery:</p>`,
+      subject: `[PulseChat] Password Reset Verification: ${otp}`,
+      title: "PulseChat Security Verification",
+      headline: "Password Reset Request",
+      bodyHtml: `<p>We received an authorized request to reset the password for your PulseChat account. Enter your single-use 5-digit verification passcode below:</p>`,
       otpCode: otp,
-      footerNote: "If you did not request a password reset, your account remains secure. Please do not share this passcode with anyone.",
+      footerNote: "If you did not request a password reset, your account credentials remain safe. Please do not share this security code with anyone.",
     });
 
   success("OTP sent to your email", res);

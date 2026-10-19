@@ -297,4 +297,18 @@ button, input, textarea, select {
   box-shadow: 0 12px 36px -10px rgba(56, 189, 248, 0.18);
   transform: translateY(-2px);
 }
+
+/* Mobile Modal Sidebar Suppressor: Hides sidebar whenever modal/profile cropper is active */
+@media (max-width: 767px) {
+  body[data-modal-open="true"] aside,
+  body[data-cropper-open="true"] aside,
+  body.hide-mobile-sidebar aside {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    transform: translateX(-100%) !important;
+  }
+}
+
 

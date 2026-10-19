@@ -25,30 +25,30 @@ const Success = () => {
 
   return (
     <AuthLayout centered={true}>
-      <div className="flex flex-col items-center text-center py-4 sm:py-6">
+      <div className="flex flex-col items-center text-center py-2 sm:py-4">
         
         {/* Success Icon */}
-        <div className="relative mb-6">
+        <div className="relative mb-5">
           <motion.div
             initial={{ scale: 0, rotate: -45 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 220, damping: 18 }}
-            className="w-20 h-20 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg"
+            className="w-18 h-18 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg"
           >
-            <CheckCircle2 className="w-10 h-10 text-emerald-400" />
+            <CheckCircle2 className="w-9 h-9 text-emerald-400" />
           </motion.div>
         </div>
 
-        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-3">
+        <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-2">
           Password Updated
         </h2>
 
-        <p className="text-sm text-slate-600 dark:text-slate-400 max-w-sm mb-6 leading-relaxed">
+        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-sm mb-5 leading-relaxed">
           Your credentials have been safely encrypted and saved. Your account is ready for sign in.
         </p>
 
         {/* Countdown Indicator */}
-        <div className="p-3 mb-8 w-full rounded-2xl bg-slate-100 dark:bg-[#0f152d]/80 border border-slate-200 dark:border-white/10 text-xs font-mono text-slate-600 dark:text-slate-300 flex items-center justify-center gap-2">
+        <div className="p-2.5 mb-6 w-full rounded-2xl bg-slate-100 dark:bg-[#0f152d]/80 border border-slate-200 dark:border-white/10 text-xs font-mono text-slate-600 dark:text-slate-300 flex items-center justify-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400" />
           <span>Redirecting to login in <strong className="text-[#38bdf8]">{countdown}s</strong>...</span>
         </div>
@@ -56,7 +56,7 @@ const Success = () => {
         {/* Direct Action Button */}
         <Link
           to="/login"
-          className="w-full bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-slate-950 font-bold py-3.5 rounded-2xl shadow-[0_0_25px_rgba(45,212,191,0.35)] hover:shadow-[0_0_40px_rgba(45,212,191,0.55)] transition-all duration-300 flex justify-center items-center gap-2 text-sm group"
+          className="w-full bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-slate-950 font-bold py-3 rounded-2xl shadow-[0_0_25px_rgba(45,212,191,0.35)] hover:shadow-[0_0_40px_rgba(45,212,191,0.55)] transition-all duration-300 flex justify-center items-center gap-2 text-sm group"
         >
           <span>Sign In Immediately</span>
           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

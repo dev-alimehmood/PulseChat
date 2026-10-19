@@ -45,9 +45,11 @@ export const register = async (req, res) => {
       profilePic: `https://i.pravatar.cc/150?u=${email}`,
       verificationToken,
     });
+    const verificationUrl = `${CLIENT_URL}/verify/${verificationToken}`;
+
     await sendPulseEmail({
       to: email,
-      subject: "Verify Your Email — PulseChat",
+      subject: "[PulseChat] Verify Your Email Address",
       headline: "Welcome to PulseChat!",
       bodyHtml: `<p>Hello <strong>${name}</strong>,</p><p>Thank you for joining PulseChat. Please click the button below to verify your email address and activate your account:</p>`,
       actionUrl: verificationUrl,

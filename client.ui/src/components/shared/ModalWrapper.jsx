@@ -7,6 +7,9 @@ const ModalWrapper = ({ children, onClose }) => {
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    document.body.classList.add("hide-mobile-sidebar");
+    document.body.setAttribute("data-modal-open", "true");
+    window.dispatchEvent(new CustomEvent("pulse:modal-state-change", { detail: { isOpen: true } }));
 
     const handleKeyDown = (e) => {
       if (e.key === "Escape" && onClose) {
@@ -17,6 +20,9 @@ const ModalWrapper = ({ children, onClose }) => {
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = originalOverflow;
+      document.body.classList.remove("hide-mobile-sidebar");
+      document.body.removeAttribute("data-modal-open");
+      window.dispatchEvent(new CustomEvent("pulse:modal-state-change", { detail: { isOpen: false } }));
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [onClose]);
@@ -25,7 +31,7 @@ const ModalWrapper = ({ children, onClose }) => {
 
   return createPortal(
     <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-x-hidden overflow-y-auto"
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-x-hidden overflow-y-auto"
       role="dialog"
       aria-modal="true"
     >

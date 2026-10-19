@@ -135,38 +135,38 @@ const ResetPassword = () => {
             values.password === values.confirm_password;
 
           return (
-            <Form className="space-y-5">
+            <Form className="space-y-3.5 sm:space-y-4">
               
               {/* New Password */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                   New Password
                 </label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#38bdf8] transition-colors">
-                    <Lock className="w-5 h-5" />
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#38bdf8] transition-colors">
+                    <Lock className="w-4 h-4" />
                   </div>
                   <Field
                     type={showPassword ? "text" : "password"}
                     name="password"
                     placeholder="••••••••••••"
                     required
-                    className="w-full pl-12 pr-12 py-3.5 bg-slate-50 dark:bg-[#0f152d]/80 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-[#38bdf8] focus:ring-2 focus:ring-[#38bdf8]/20 focus:bg-white dark:focus:bg-[#121936] transition-all duration-300 shadow-sm text-sm"
+                    className="w-full pl-10 pr-10 py-2.5 sm:py-3 bg-slate-50 dark:bg-[#0f152d]/80 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-[#38bdf8] focus:ring-2 focus:ring-[#38bdf8]/20 focus:bg-white dark:focus:bg-[#121936] transition-all duration-300 shadow-sm text-xs sm:text-sm"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
 
                 {/* Strength Meter */}
                 {values.password && (
-                  <div className="mt-2.5 space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] font-mono">
+                  <div className="mt-2 space-y-1">
+                    <div className="flex items-center justify-between text-[10px] font-mono">
                       <span className="text-slate-500 dark:text-slate-400">Password Strength</span>
                       <span
                         className={`font-bold ${
@@ -180,7 +180,7 @@ const ResetPassword = () => {
                         {strength < 50 ? "Weak" : strength < 100 ? "Medium" : "Strong"}
                       </span>
                     </div>
-                    <div className="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                    <div className="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                       <div
                         className={`h-full transition-all duration-300 rounded-full ${
                           strength < 50
@@ -198,26 +198,26 @@ const ResetPassword = () => {
 
               {/* Confirm Password */}
               <div>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     Confirm New Password
                   </label>
                   {passwordsMatch && (
-                    <span className="text-[11px] font-mono text-[#2dd4bf] inline-flex items-center gap-1 font-semibold">
+                    <span className="text-[10px] font-mono text-[#2dd4bf] inline-flex items-center gap-1 font-semibold">
                       <Check className="w-3.5 h-3.5" /> Matched
                     </span>
                   )}
                 </div>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#38bdf8] transition-colors">
-                    <ShieldCheck className="w-5 h-5" />
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#38bdf8] transition-colors">
+                    <ShieldCheck className="w-4 h-4" />
                   </div>
                   <Field
                     type={showConfirmPassword ? "text" : "password"}
                     name="confirm_password"
                     placeholder="••••••••••••"
                     required
-                    className={`w-full pl-12 pr-12 py-3.5 bg-slate-50 dark:bg-[#0f152d]/80 border rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#38bdf8]/20 focus:bg-white dark:focus:bg-[#121936] transition-all duration-300 shadow-sm text-sm ${
+                    className={`w-full pl-10 pr-10 py-2.5 sm:py-3 bg-slate-50 dark:bg-[#0f152d]/80 border rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#38bdf8]/20 focus:bg-white dark:focus:bg-[#121936] transition-all duration-300 shadow-sm text-xs sm:text-sm ${
                       passwordsMatch
                         ? "border-[#2dd4bf]/70 focus:border-[#2dd4bf]"
                         : "border-slate-200 dark:border-white/10 focus:border-[#38bdf8]"
@@ -227,9 +227,9 @@ const ResetPassword = () => {
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                   >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
@@ -240,11 +240,11 @@ const ResetPassword = () => {
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full mt-2 bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-slate-950 font-bold py-3.5 rounded-2xl shadow-[0_0_25px_rgba(45,212,191,0.35)] hover:shadow-[0_0_40px_rgba(45,212,191,0.55)] transition-all duration-300 flex justify-center items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed group cursor-pointer"
+                className="w-full mt-2 bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-slate-950 font-bold py-3 rounded-2xl shadow-[0_0_25px_rgba(45,212,191,0.35)] hover:shadow-[0_0_40px_rgba(45,212,191,0.55)] transition-all duration-300 flex justify-center items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed group cursor-pointer"
               >
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
                     <span>Updating Password...</span>
                   </div>
                 ) : (
@@ -256,7 +256,7 @@ const ResetPassword = () => {
               </motion.button>
 
               {/* Back to Login Link */}
-              <div className="pt-4 text-center border-t border-slate-200/80 dark:border-white/10">
+              <div className="pt-3.5 text-center border-t border-slate-200/80 dark:border-white/10">
                 <Link
                   to="/login"
                   className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[#38bdf8] transition-colors"

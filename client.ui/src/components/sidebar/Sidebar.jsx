@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../context/auth";
 import { getInitials, avatarColor } from "../../utils/chat";
 import Avatar from "../shared/Avatar";
@@ -29,10 +29,28 @@ const Sidebar = ({ activeTab, onSelectTab, toggleDark, isDark, className = "" })
   const user = Auth?.User;
   const [bg, fg] = avatarColor(user?._id || "");
 
+  const [isModalOpen, setIsModalOpen] = useState(() => {
+    if (typeof document !== "undefined") {
+      return document.body.getAttribute("data-modal-open") === "true";
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const handleModalState = (e) => {
+      setIsModalOpen(Boolean(e?.detail?.isOpen));
+    };
+
+    window.addEventListener("pulse:modal-state-change", handleModalState);
+    return () => {
+      window.removeEventListener("pulse:modal-state-change", handleModalState);
+    };
+  }, []);
+
   const isActivePath = (path) => location.pathname === path || (path === "/chatpage" && location.pathname === "/");
 
   return (
-    <aside className={`h-full max-h-screen overflow-y-auto overflow-x-hidden custom-scrollbar w-16 md:w-20 shrink-0 flex-col items-center justify-between border-r border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-[#0b1021]/80 py-4 shadow-[12px_0_40px_rgba(15,23,42,0.06)] dark:shadow-[12px_0_40px_rgba(0,0,0,0.5)] backdrop-blur-2xl transition-all duration-500 z-50 ${className || "flex"}`}>
+    <aside className={`h-full max-h-screen overflow-y-auto overflow-x-hidden custom-scrollbar w-16 md:w-20 shrink-0 flex-col items-center justify-between border-r border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-[#0b1021]/80 py-4 shadow-[12px_0_40px_rgba(15,23,42,0.06)] dark:shadow-[12px_0_40px_rgba(0,0,0,0.5)] backdrop-blur-2xl transition-all duration-500 z-50 ${isModalOpen ? "!hidden md:!flex" : ""} ${className || "flex"}`}>
       
       {/* Top Brand Logo */}
       <div className="flex flex-col items-center gap-6 w-full">

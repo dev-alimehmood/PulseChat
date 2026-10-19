@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { 
   X, Camera, Image as ImageIcon, ZoomIn, ZoomOut, RotateCw, 
   Check, RefreshCw, AlertCircle, SwitchCamera, CheckCircle2,
@@ -70,6 +71,23 @@ const ImageCropperModal = ({ isOpen, onClose, onSave, currentPhoto, currentName 
       stopCamera();
     };
   }, [stopCamera]);
+
+  // Ensure sidebar on mobile is completely hidden whenever profile photo studio modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add("hide-mobile-sidebar");
+      document.body.setAttribute("data-modal-open", "true");
+      document.body.setAttribute("data-cropper-open", "true");
+      window.dispatchEvent(new CustomEvent("pulse:modal-state-change", { detail: { isOpen: true } }));
+
+      return () => {
+        document.body.classList.remove("hide-mobile-sidebar");
+        document.body.removeAttribute("data-modal-open");
+        document.body.removeAttribute("data-cropper-open");
+        window.dispatchEvent(new CustomEvent("pulse:modal-state-change", { detail: { isOpen: false } }));
+      };
+    }
+  }, [isOpen]);
 
   // Start live webcam or mobile camera
   const startLiveCamera = async (facing = facingMode) => {
@@ -319,10 +337,10 @@ const ImageCropperModal = ({ isOpen, onClose, onSave, currentPhoto, currentName 
     onClose();
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === "undefined") return null;
 
-  return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fadeIn select-none">
+  return createPortal(
+    <div className="fixed inset-0 z-[999999] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fadeIn select-none">
       <motion.div
         initial={{ opacity: 0, scale: 0.94, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -666,7 +684,8 @@ const ImageCropperModal = ({ isOpen, onClose, onSave, currentPhoto, currentName 
 
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

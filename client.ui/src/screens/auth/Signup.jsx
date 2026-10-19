@@ -1,5 +1,5 @@
 import { useFormik } from "formik";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle2, UserPlus, ExternalLink } from "lucide-react";
 import { SignUpSchema } from "../../Schemas/Index";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
@@ -175,168 +175,174 @@ const SignUp = () => {
             </motion.div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-3.5">
             
-            {/* Full Name */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                Full Name
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#38bdf8] transition-colors">
-                  <User className="w-5 h-5" />
+            {/* Row 1: Full Name & Email Address */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
+              {/* Full Name */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                  Full Name
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#38bdf8] transition-colors">
+                    <User className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    name="full_name"
+                    value={values.full_name}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="Sarah Jenkins"
+                    className={`w-full pl-10 pr-3.5 py-2.5 bg-slate-50 dark:bg-[#0f152d]/80 border rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#38bdf8]/20 focus:bg-white dark:focus:bg-[#121936] transition-all duration-300 shadow-sm text-xs sm:text-sm ${
+                      errors.full_name && touched.full_name
+                        ? "border-red-500/80 focus:border-red-500"
+                        : "border-slate-200 dark:border-white/10 focus:border-[#38bdf8]"
+                    }`}
+                  />
                 </div>
-                <input
-                  type="text"
-                  name="full_name"
-                  value={values.full_name}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="Sarah Jenkins"
-                  className={`w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-[#0f152d]/80 border rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#38bdf8]/20 focus:bg-white dark:focus:bg-[#121936] transition-all duration-300 shadow-sm text-sm ${
-                    errors.full_name && touched.full_name
-                      ? "border-red-500/80 focus:border-red-500"
-                      : "border-slate-200 dark:border-white/10 focus:border-[#38bdf8]"
-                  }`}
-                />
+                {errors.full_name && touched.full_name && (
+                  <p className="text-red-500 dark:text-red-400 text-[11px] mt-1 font-medium pl-1">
+                    {errors.full_name}
+                  </p>
+                )}
               </div>
-              {errors.full_name && touched.full_name && (
-                <p className="text-red-500 dark:text-red-400 text-xs mt-1 font-medium pl-1">
-                  {errors.full_name}
-                </p>
-              )}
+
+              {/* Email Address */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                  Email Address
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#38bdf8] transition-colors">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="email"
+                    name="email"
+                    value={values.email}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="sarah@pulsechat.io"
+                    className={`w-full pl-10 pr-3.5 py-2.5 bg-slate-50 dark:bg-[#0f152d]/80 border rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#38bdf8]/20 focus:bg-white dark:focus:bg-[#121936] transition-all duration-300 shadow-sm text-xs sm:text-sm ${
+                      errors.email && touched.email
+                        ? "border-red-500/80 focus:border-red-500"
+                        : "border-slate-200 dark:border-white/10 focus:border-[#38bdf8]"
+                    }`}
+                  />
+                </div>
+                {errors.email && touched.email && (
+                  <p className="text-red-500 dark:text-red-400 text-[11px] mt-1 font-medium pl-1">
+                    {errors.email}
+                  </p>
+                )}
+              </div>
             </div>
 
-            {/* Email Address */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                Email Address
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#38bdf8] transition-colors">
-                  <Mail className="w-5 h-5" />
+            {/* Row 2: Password & Confirm Password */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
+              {/* Password */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                  Password
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#38bdf8] transition-colors">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={values.password}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="••••••••••••"
+                    className={`w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-[#0f152d]/80 border rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#38bdf8]/20 focus:bg-white dark:focus:bg-[#121936] transition-all duration-300 shadow-sm text-xs sm:text-sm ${
+                      errors.password && touched.password
+                        ? "border-red-500/80 focus:border-red-500"
+                        : "border-slate-200 dark:border-white/10 focus:border-[#38bdf8]"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
-                <input
-                  type="email"
-                  name="email"
-                  value={values.email}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="sarah@pulsechat.io"
-                  className={`w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-[#0f152d]/80 border rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#38bdf8]/20 focus:bg-white dark:focus:bg-[#121936] transition-all duration-300 shadow-sm text-sm ${
-                    errors.email && touched.email
-                      ? "border-red-500/80 focus:border-red-500"
-                      : "border-slate-200 dark:border-white/10 focus:border-[#38bdf8]"
-                  }`}
-                />
+
+                {errors.password && touched.password && (
+                  <p className="text-red-500 dark:text-red-400 text-[11px] mt-1 font-medium pl-1">
+                    {errors.password}
+                  </p>
+                )}
               </div>
-              {errors.email && touched.email && (
-                <p className="text-red-500 dark:text-red-400 text-xs mt-1 font-medium pl-1">
-                  {errors.email}
-                </p>
-              )}
+
+              {/* Confirm Password */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                  Confirm Password
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#38bdf8] transition-colors">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirm_password"
+                    value={values.confirm_password}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="••••••••••••"
+                    className={`w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-[#0f152d]/80 border rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#38bdf8]/20 focus:bg-white dark:focus:bg-[#121936] transition-all duration-300 shadow-sm text-xs sm:text-sm ${
+                      errors.confirm_password && touched.confirm_password
+                        ? "border-red-500/80 focus:border-red-500"
+                        : "border-slate-200 dark:border-white/10 focus:border-[#38bdf8]"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {errors.confirm_password && touched.confirm_password && (
+                  <p className="text-red-500 dark:text-red-400 text-[11px] mt-1 font-medium pl-1">
+                    {errors.confirm_password}
+                  </p>
+                )}
+              </div>
             </div>
 
-            {/* Password */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                Password
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#38bdf8] transition-colors">
-                  <Lock className="w-5 h-5" />
-                </div>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={values.password}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="••••••••••••"
-                  className={`w-full pl-12 pr-12 py-3 bg-slate-50 dark:bg-[#0f152d]/80 border rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#38bdf8]/20 focus:bg-white dark:focus:bg-[#121936] transition-all duration-300 shadow-sm text-sm ${
-                    errors.password && touched.password
-                      ? "border-red-500/80 focus:border-red-500"
-                      : "border-slate-200 dark:border-white/10 focus:border-[#38bdf8]"
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-
-              {/* Password Requirement Badges */}
-              <div className="flex flex-wrap items-center gap-2 mt-2 pt-1 text-[10px]">
-                <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono ${
-                    hasUpper ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30" : "bg-slate-100 dark:bg-white/5 text-slate-400"
-                  }`}
-                >
-                  {hasUpper ? "✓" : "•"} 1 Uppercase
-                </span>
-                <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono ${
-                    hasLower ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30" : "bg-slate-100 dark:bg-white/5 text-slate-400"
-                  }`}
-                >
-                  {hasLower ? "✓" : "•"} 1 Lowercase
-                </span>
-                <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono ${
-                    hasNumber ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30" : "bg-slate-100 dark:bg-white/5 text-slate-400"
-                  }`}
-                >
-                  {hasNumber ? "✓" : "•"} 1 Number
-                </span>
-              </div>
-
-              {errors.password && touched.password && (
-                <p className="text-red-500 dark:text-red-400 text-xs mt-1 font-medium pl-1">
-                  {errors.password}
-                </p>
-              )}
-            </div>
-
-            {/* Confirm Password */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                Confirm Password
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#38bdf8] transition-colors">
-                  <Lock className="w-5 h-5" />
-                </div>
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  name="confirm_password"
-                  value={values.confirm_password}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="••••••••••••"
-                  className={`w-full pl-12 pr-12 py-3 bg-slate-50 dark:bg-[#0f152d]/80 border rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#38bdf8]/20 focus:bg-white dark:focus:bg-[#121936] transition-all duration-300 shadow-sm text-sm ${
-                    errors.confirm_password && touched.confirm_password
-                      ? "border-red-500/80 focus:border-red-500"
-                      : "border-slate-200 dark:border-white/10 focus:border-[#38bdf8]"
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-              {errors.confirm_password && touched.confirm_password && (
-                <p className="text-red-500 dark:text-red-400 text-xs mt-1 font-medium pl-1">
-                  {errors.confirm_password}
-                </p>
-              )}
+            {/* Password Requirement Badges */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-[10px]">
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono ${
+                  hasUpper ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30" : "bg-slate-100 dark:bg-white/5 text-slate-400"
+                }`}
+              >
+                {hasUpper ? "✓" : "•"} Uppercase
+              </span>
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono ${
+                  hasLower ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30" : "bg-slate-100 dark:bg-white/5 text-slate-400"
+                }`}
+              >
+                {hasLower ? "✓" : "•"} Lowercase
+              </span>
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono ${
+                  hasNumber ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30" : "bg-slate-100 dark:bg-white/5 text-slate-400"
+                }`}
+              >
+                {hasNumber ? "✓" : "•"} 2 Digits
+              </span>
             </div>
 
             {/* Submit Button */}
@@ -345,11 +351,11 @@ const SignUp = () => {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={loading}
-              className="w-full mt-4 bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-slate-950 font-bold py-3.5 rounded-2xl shadow-[0_0_25px_rgba(45,212,191,0.35)] hover:shadow-[0_0_40px_rgba(45,212,191,0.55)] transition-all duration-300 flex justify-center items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed group cursor-pointer"
+              className="w-full mt-2 bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-slate-950 font-bold py-3 rounded-2xl shadow-[0_0_25px_rgba(45,212,191,0.35)] hover:shadow-[0_0_40px_rgba(45,212,191,0.55)] transition-all duration-300 flex justify-center items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed group cursor-pointer"
             >
               {loading ? (
                 <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
                   <span>Creating Account...</span>
                 </div>
               ) : (
@@ -362,8 +368,8 @@ const SignUp = () => {
           </form>
 
           {/* Switch to Login */}
-          <div className="pt-5 mt-5 text-center border-t border-slate-200/80 dark:border-white/10">
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+          <div className="pt-3.5 mt-3.5 text-center border-t border-slate-200/80 dark:border-white/10">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
               Already have an account?{" "}
               <Link
                 to="/login"
