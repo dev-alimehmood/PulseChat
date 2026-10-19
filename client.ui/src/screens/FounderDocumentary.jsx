@@ -147,10 +147,9 @@ const FounderDocumentary = ({ toggleDark, isDark }) => {
         
         {/* Editorial Hero Header with Text Load Animations */}
         <div className="text-center space-y-6 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-400 text-xs font-mono tracking-widest uppercase backdrop-blur-md animate-fade-in-down">
-            <Film className="w-3.5 h-3.5 text-teal-400" />
-            The Official Technical Documentary
-          </div>
+          <span className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#38bdf8] font-bold block animate-fade-in-down">
+            TECHNICAL KEYNOTE DOCUMENTARY
+          </span>
 
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-white leading-[1.15] animate-fade-in-up delay-100">
             The Complete Story of <br />
@@ -451,9 +450,9 @@ const FounderDocumentary = ({ toggleDark, isDark }) => {
               <div className="p-8 sm:p-10 rounded-3xl border border-white/10 bg-[#0d1222]/80 backdrop-blur-2xl flex flex-col md:flex-row gap-8 items-start">
                 <div className="w-40 h-52 sm:w-48 sm:h-64 rounded-2xl overflow-hidden border border-white/15 bg-black/40 shrink-0 shadow-xl">
                   <img
-                    src="/images/ali_founder.jpg"
-                    alt="Ali"
-                    className="w-full h-full object-cover brightness-105 contrast-105"
+                    src="/ali.jpeg"
+                    alt="Ali Mehmood"
+                    className="w-full h-full object-cover object-top brightness-105 contrast-105"
                   />
                 </div>
 
@@ -463,7 +462,7 @@ const FounderDocumentary = ({ toggleDark, isDark }) => {
                       Full-Stack MERN Lead
                     </span>
                     <h3 className="text-3xl font-bold text-white tracking-tight flex items-center gap-2 pt-1">
-                      Ali
+                      Ali Mehmood
                       <BadgeCheck className="w-6 h-6 text-cyan-400" />
                     </h3>
                     <p className="text-sm font-mono text-cyan-300 font-medium">Founder & Principal Systems Architect</p>
@@ -528,9 +527,9 @@ const FounderDocumentary = ({ toggleDark, isDark }) => {
               <div className="p-8 sm:p-10 rounded-3xl border border-white/10 bg-[#0d1222]/80 backdrop-blur-2xl flex flex-col md:flex-row gap-8 items-start">
                 <div className="w-40 h-52 sm:w-48 sm:h-64 rounded-2xl overflow-hidden border border-white/15 bg-black/40 shrink-0 shadow-xl">
                   <img
-                    src="/images/moeez_founder.jpg"
+                    src="/Moeez.jpeg"
                     alt="Muhammad Moeez"
-                    className="w-full h-full object-cover brightness-105 contrast-105"
+                    className="w-full h-full object-cover object-top brightness-105 contrast-105"
                   />
                 </div>
 

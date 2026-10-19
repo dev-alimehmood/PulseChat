@@ -2,8 +2,8 @@ import cuser from "../models/cuser.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import nodemailer from "nodemailer";
 import { CLIENT_URL } from "../config/aws.js";
+import { sendPulseEmail } from "../helpers/mailer.js";
 
 // ✅ Get All Users (except logged-in user)
 export const getUsers = async (req, res) => {
@@ -45,19 +45,14 @@ export const register = async (req, res) => {
       profilePic: `https://i.pravatar.cc/150?u=${email}`,
       verificationToken,
     });
-    const transporter = nodemailer.createTransport({
-      service: "Gmail",
-      auth: {
-        user: process.env.EMAIL_USER, // your Gmail
-        pass: process.env.EMAIL_PASS, // App Password (NOT normal password) if 2FA is on
-      },
-    });
-    const verificationUrl = `${CLIENT_URL}/verify/${verificationToken}`;
-    await transporter.sendMail({
-      from: "no-reply@chatme.com",
+    await sendPulseEmail({
       to: email,
-      subject: "Verify Your Email",
-      html: `<p>Click  <a href="${verificationUrl}" >here</a>to verify your email at chatme</p>`,
+      subject: "Verify Your Email — PulseChat",
+      headline: "Welcome to PulseChat!",
+      bodyHtml: `<p>Hello <strong>${name}</strong>,</p><p>Thank you for joining PulseChat. Please click the button below to verify your email address and activate your account:</p>`,
+      actionUrl: verificationUrl,
+      actionText: "Verify & Activate Account",
+      footerNote: "If you did not create a PulseChat account, you can safely ignore this message.",
     });
 
     res.status(201).json(user);

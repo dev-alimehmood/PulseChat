@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Sun, Moon, ShieldCheck, Zap, MessageSquare, CheckCircle2, Sparkles, Radio } from "lucide-react";
+import { ArrowLeft, Sun, Moon, ShieldCheck, Zap, Radio, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 export const AuthLayout = ({
-  badge = "⚡ Sub-50ms Socket Engine",
   heroTitle = "Connect with your world in real-time.",
   heroSubtitle = "Ultra-fast messaging, military-grade privacy, and instant push synchronization across all your devices.",
   cardTitle,
@@ -117,10 +116,9 @@ export const AuthLayout = ({
               {/* Brand Top Header */}
               <div className="relative z-10 flex items-center justify-between">
                 <div className="flex items-center gap-3.5">
-                  <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#6366f1]/30 via-[#38bdf8]/25 to-[#2dd4bf]/30 border border-[#38bdf8]/40 shadow-[0_0_25px_rgba(56,189,248,0.35)] backdrop-blur-xl">
-                    <span className="text-2xl animate-pulse">🫀</span>
-                    <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#2dd4bf] ring-2 ring-[#0b1022] animate-ping" />
-                    <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#2dd4bf]" />
+                  <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#6366f1]/20 via-[#38bdf8]/15 to-[#2dd4bf]/20 border border-[#38bdf8]/40 shadow-[0_0_25px_rgba(56,189,248,0.35)] backdrop-blur-xl p-1.5">
+                    <img src="/logo.png" alt="PulseChat" className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]" />
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-1.5 ring-white dark:ring-transparent shadow-[0_0_8px_rgba(52,211,153,0.85)]" />
                   </div>
                   <div>
                     <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-[#818cf8] via-[#38bdf8] to-[#2dd4bf] bg-clip-text text-transparent">
@@ -131,20 +129,10 @@ export const AuthLayout = ({
                     </span>
                   </div>
                 </div>
-
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono text-[#38bdf8] backdrop-blur-md">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#2dd4bf] animate-ping" />
-                  <span>v2.4 Active</span>
-                </div>
               </div>
 
               {/* Middle Hero Section */}
-              <div className="relative z-10 my-8 space-y-6">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#38bdf8]/10 border border-[#38bdf8]/30 text-xs font-semibold text-[#38bdf8] backdrop-blur-md">
-                  <Sparkles className="w-3.5 h-3.5 text-[#2dd4bf]" />
-                  <span>{badge}</span>
-                </div>
-
+              <div className="relative z-10 my-8 space-y-5">
                 <h1 className="text-3xl xl:text-4xl font-extrabold leading-tight tracking-tight text-white">
                   {heroTitle}
                 </h1>
@@ -162,11 +150,11 @@ export const AuthLayout = ({
                     <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl space-y-2.5 shadow-xl">
                       <div className="flex items-center justify-between pb-1 border-b border-white/10">
                         <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-[#2dd4bf] animate-ping" />
-                          <span className="text-xs font-bold text-white tracking-wide">Pulse Real-Time Network</span>
+                          <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                          <span className="text-xs font-semibold text-white tracking-wide">Pulse Real-Time Network</span>
                         </div>
-                        <span className="text-[10px] font-mono text-[#38bdf8] bg-[#38bdf8]/10 px-2 py-0.5 rounded-full border border-[#38bdf8]/20">
-                          32ms SYNC
+                        <span className="text-[10px] font-mono text-slate-300 bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                          32ms Sync
                         </span>
                       </div>
                       <p className="text-xs text-slate-200 leading-relaxed font-normal">
@@ -174,9 +162,9 @@ export const AuthLayout = ({
                       </p>
                       <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono pt-1">
                         <span className="flex items-center gap-1.5 text-[#2dd4bf]">
-                          <ShieldCheck className="w-3.5 h-3.5" /> Military-grade Encryption
+                          <ShieldCheck className="w-3.5 h-3.5" /> TLS 1.3 Architecture
                         </span>
-                        <span>Pulse Core v2.4</span>
+                        <span>Enterprise Core</span>
                       </div>
                     </div>
 
@@ -236,9 +224,9 @@ export const AuthLayout = ({
               {/* Mobile Brand Header (Visible only on smaller screens) */}
               <div className="lg:hidden flex items-center justify-between mb-8 pb-5 border-b border-slate-200/80 dark:border-white/10">
                 <div className="flex items-center gap-3">
-                  <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-[#6366f1]/30 via-[#38bdf8]/25 to-[#2dd4bf]/30 border border-[#38bdf8]/40 shadow-[0_0_20px_rgba(56,189,248,0.3)]">
-                    <span className="text-xl animate-pulse">🫀</span>
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#2dd4bf] ring-2 ring-white dark:ring-[#0c1228]" />
+                  <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-[#6366f1]/20 via-[#38bdf8]/15 to-[#2dd4bf]/20 border border-[#38bdf8]/40 shadow-[0_0_20px_rgba(56,189,248,0.3)] p-1">
+                    <img src="/logo.png" alt="PulseChat" className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]" />
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-1.5 ring-white dark:ring-transparent shadow-[0_0_8px_rgba(52,211,153,0.85)]" />
                   </div>
                   <div>
                     <span className="text-xl font-black tracking-tight bg-gradient-to-r from-[#818cf8] via-[#38bdf8] to-[#2dd4bf] bg-clip-text text-transparent">
@@ -250,9 +238,9 @@ export const AuthLayout = ({
                   </div>
                 </div>
 
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#38bdf8]/10 border border-[#38bdf8]/30 text-[10px] font-mono text-[#38bdf8]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#2dd4bf] animate-ping" />
-                  <span>Live</span>
+                <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span>Online</span>
                 </div>
               </div>
 

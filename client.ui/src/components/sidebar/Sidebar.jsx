@@ -18,7 +18,7 @@ const ADMIN_NAV = [
   { label: "Manage Chats", path: "/admin/chats", icon: MessageSquare },
 ];
 
-const Sidebar = ({ activeTab, onSelectTab, toggleDark, isDark }) => {
+const Sidebar = ({ activeTab, onSelectTab, toggleDark, isDark, className = "" }) => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [Auth, , { logout }] = useAuth();
   const navigate = useNavigate();
@@ -29,7 +29,7 @@ const Sidebar = ({ activeTab, onSelectTab, toggleDark, isDark }) => {
   const isActivePath = (path) => location.pathname === path || (path === "/chatpage" && location.pathname === "/");
 
   return (
-    <aside className="flex h-full max-h-screen overflow-y-auto overflow-x-hidden custom-scrollbar w-16 md:w-20 shrink-0 flex-col items-center justify-between border-r border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-[#0b1021]/80 py-4 shadow-[12px_0_40px_rgba(15,23,42,0.06)] dark:shadow-[12px_0_40px_rgba(0,0,0,0.5)] backdrop-blur-2xl transition-all duration-500 z-50">
+    <aside className={`h-full max-h-screen overflow-y-auto overflow-x-hidden custom-scrollbar w-16 md:w-20 shrink-0 flex-col items-center justify-between border-r border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-[#0b1021]/80 py-4 shadow-[12px_0_40px_rgba(15,23,42,0.06)] dark:shadow-[12px_0_40px_rgba(0,0,0,0.5)] backdrop-blur-2xl transition-all duration-500 z-50 ${className || "flex"}`}>
       
       {/* Top Brand Logo */}
       <div className="flex flex-col items-center gap-6 w-full">
@@ -38,11 +38,14 @@ const Sidebar = ({ activeTab, onSelectTab, toggleDark, isDark }) => {
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate("/chatpage")}
           title="PulseChat Workspace"
-          className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#6366f1]/20 via-[#38bdf8]/20 to-[#2dd4bf]/20 border border-[#2dd4bf]/40 shadow-[0_0_20px_rgba(45,212,191,0.25)] group"
+          className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#6366f1]/20 via-[#38bdf8]/20 to-[#2dd4bf]/20 border border-[#2dd4bf]/40 shadow-[0_0_20px_rgba(45,212,191,0.25)] group p-1"
         >
-          <span className="text-xl group-hover:scale-110 transition-transform">🫀</span>
-          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#2dd4bf] ring-2 ring-white dark:ring-[#0b1021] animate-ping" />
-          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#2dd4bf]" />
+          <img
+            src="/logo.png"
+            alt="PulseChat"
+            className="w-8 h-8 object-contain drop-shadow-[0_0_10px_rgba(56,189,248,0.4)] group-hover:scale-110 transition-transform"
+          />
+          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-1.5 ring-white dark:ring-transparent shadow-[0_0_8px_rgba(52,211,153,0.85)]" />
         </motion.button>
 
         <div className="w-8 h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-800 to-transparent" />
@@ -165,6 +168,12 @@ const Sidebar = ({ activeTab, onSelectTab, toggleDark, isDark }) => {
         <InviteModal
           isOpen={showInviteModal}
           onClose={() => setShowInviteModal(false)}
+          onOpenChatWithUser={(targetUser) => {
+            setShowInviteModal(false);
+            if (targetUser?._id) {
+              navigate(`/chatpage?chat=${targetUser._id}`);
+            }
+          }}
         />
       )}
     </aside>

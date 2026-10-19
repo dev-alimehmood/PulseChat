@@ -7,7 +7,7 @@ export const getConversations = async (req, res) => {
 
     const conversations = await Conversation
       .find({ participants: { $in: [userId] } })
-      .populate("participants", "full_name profilepicture isOnline lastSeen email createdAt bio city phonenumber gender")
+      .populate("participants", "full_name profilepicture isOnline lastSeen email createdAt bio city phonenumber gender showOnlineStatus")
       .populate({
         path: "lastMessage",
         populate: {
@@ -36,7 +36,7 @@ export const getConversations = async (req, res) => {
               _id: otherUser._id,
               full_name: otherUser.full_name,
               profilepicture: otherUser.profilepicture,
-              isOnline: otherUser.isOnline || false,
+              isOnline: (otherUser.showOnlineStatus !== false && otherUser.isOnline) || false,
               lastSeen: otherUser.lastSeen,
               email: otherUser.email,
               createdAt: otherUser.createdAt,
@@ -89,7 +89,7 @@ export const createConversation = async (req, res) => {
 
     if (conversation) {
       // populate before returning
-      await conversation.populate("participants", "full_name profilepicture isOnline lastSeen email createdAt bio city phonenumber gender");
+      await conversation.populate("participants", "full_name profilepicture isOnline lastSeen email createdAt bio city phonenumber gender showOnlineStatus");
       
       const otherUser = conversation.participants.find(
         (p) => p._id.toString() !== senderId.toString()
@@ -103,7 +103,7 @@ export const createConversation = async (req, res) => {
                 _id: otherUser._id,
                 full_name: otherUser.full_name,
                 profilepicture: otherUser.profilepicture,
-                isOnline: otherUser.isOnline || false,
+                isOnline: (otherUser.showOnlineStatus !== false && otherUser.isOnline) || false,
                 lastSeen: otherUser.lastSeen,
                 email: otherUser.email,
                 createdAt: otherUser.createdAt,
@@ -127,7 +127,7 @@ export const createConversation = async (req, res) => {
       unreadCount: {},
     });
 
-    await conversation.populate("participants", "full_name profilepicture isOnline lastSeen email createdAt bio city phonenumber gender");
+    await conversation.populate("participants", "full_name profilepicture isOnline lastSeen email createdAt bio city phonenumber gender showOnlineStatus");
 
     const otherUser = conversation.participants.find(
       (p) => p._id.toString() !== senderId.toString()
@@ -141,7 +141,7 @@ export const createConversation = async (req, res) => {
               _id: otherUser._id,
               full_name: otherUser.full_name,
               profilepicture: otherUser.profilepicture,
-              isOnline: otherUser.isOnline || false,
+              isOnline: (otherUser.showOnlineStatus !== false && otherUser.isOnline) || false,
               lastSeen: otherUser.lastSeen,
               email: otherUser.email,
               createdAt: otherUser.createdAt,

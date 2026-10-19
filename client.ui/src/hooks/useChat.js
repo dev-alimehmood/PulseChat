@@ -79,7 +79,6 @@ export const useChat = (selectedChatId = null, onSelectChat = null) => {
         const msgIdStr = data.messageId ? String(data.messageId) : null;
         if (msgIdStr && !notifiedMessagesRef.current.has(msgIdStr)) {
           notifiedMessagesRef.current.add(msgIdStr);
-          playInChatSound();
         }
       }
     };
@@ -197,36 +196,53 @@ export const useChat = (selectedChatId = null, onSelectChat = null) => {
             // ✅ User is ONLINE and ACTIVELY IN THE CHAT:
             // Play gentle in-chat chime, DO NOT show popup or desktop notification!
             playInChatSound();
-          } else {
-            // ✅ User is in another conversation, looking at another page, or tab is minimized/blurred:
+          } else if (isWindowFocused) {
+            // ✅ User is in another conversation or looking at another tab/screen within the app:
             playAlertSound();
-
-            if (isWindowFocused) {
-              // Show polished in-app toast
-              toast.info(`💬 ${senderName}: ${messagePreview}`, {
-                position: "top-right",
-                autoClose: 4000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                theme: "colored",
-                onClick: () => {
-                  if (onSelectChatRef.current && targetConv) {
-                    onSelectChatRef.current(targetConv);
-                  }
-                },
-              });
-            } else {
-              // Tab is in background / minimized -> Show native desktop alert via SW registration
-              if ("serviceWorker" in navigator && Notification.permission === "granted") {
-                navigator.serviceWorker.ready.then((reg) => {
+            toast.info(`💬 ${senderName}: ${messagePreview}`, {
+              position: "top-right",
+              autoClose: 4000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              theme: "colored",
+              onClick: () => {
+                if (onSelectChatRef.current && targetConv) {
+                  onSelectChatRef.current(targetConv);
+                }
+              },
+            });
+          } else {
+            // ✅ Window is minimized or in the background:
+            // Native desktop alert via SW registration with strict deduplication
+            const notificationTag = `pulse-msg-${msg._id}`;
+            if ("serviceWorker" in navigator && Notification.permission === "granted") {
+              navigator.serviceWorker.ready.then((reg) => {
+                if (reg.getNotifications) {
+                  reg.getNotifications({ tag: notificationTag }).then((existing) => {
+                    if (existing && existing.length > 0) return; // Already on screen!
+                    reg.showNotification(senderName, {
+                      body: messagePreview,
+                      icon: targetConv?.user?.profilepicture || "/favicon.png",
+                      badge: "/favicon.png",
+                      tag: notificationTag,
+                      renotify: false, // Strict single alert
+                      vibrate: [200, 100, 200],
+                      data: {
+                        url: `/chatpage?chat=${msg.conversationId}`,
+                        conversationId: msg.conversationId,
+                        messageId: msg._id,
+                      },
+                    });
+                  });
+                } else {
                   reg.showNotification(senderName, {
                     body: messagePreview,
                     icon: targetConv?.user?.profilepicture || "/favicon.png",
                     badge: "/favicon.png",
-                    tag: `pulse-msg-${msg._id}`,
-                    renotify: true,
+                    tag: notificationTag,
+                    renotify: false,
                     vibrate: [200, 100, 200],
                     data: {
                       url: `/chatpage?chat=${msg.conversationId}`,
@@ -234,8 +250,8 @@ export const useChat = (selectedChatId = null, onSelectChat = null) => {
                       messageId: msg._id,
                     },
                   });
-                });
-              }
+                }
+              });
             }
           }
         }

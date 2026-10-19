@@ -22,6 +22,10 @@ const userSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  showOnlineStatus: {
+    type: Boolean,
+    default: true,
+  },
 
   lastSeen: {
     type: Date,

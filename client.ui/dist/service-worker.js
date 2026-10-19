@@ -103,31 +103,39 @@ self.addEventListener("push", (event) => {
           }
         }
 
-        // REQUIREMENT: If user is online and inside the active chat, suppress system popup!
+        // REQUIREMENT: If user is online and actively inside this chat, suppress system popup
         if (isActivelyViewingThisChat) {
           return;
         }
 
-        // REQUIREMENT: Out of chat, backgrounded tab, screen locked, mobile, or offline -> Show notification immediately!
+        // Tag uniquely identifying this message
         const notificationTag = msgId ? `pulse-msg-${msgId}` : `pulse-conv-${convId || "general"}`;
         const targetUrl = data.url || (convId ? `/chatpage?chat=${convId}` : "/chatpage");
 
-        const options = {
-          body: data.body || "New message received",
-          icon: data.icon || "/favicon.png",
-          badge: "/favicon.png",
-          tag: notificationTag,
-          renotify: true,
-          requireInteraction: false,
-          vibrate: [200, 100, 200],
-          data: {
-            url: targetUrl,
-            conversationId: convId,
-            messageId: msgId,
-          },
-        };
+        // OS-level deduplication: check if notification with this tag is already active on user's screen
+        return self.registration.getNotifications({ tag: notificationTag }).then((existing) => {
+          if (existing && existing.length > 0) {
+            // Already notified on screen — skip to guarantee single notification
+            return;
+          }
 
-        return self.registration.showNotification(data.title || "PulseChat", options);
+          const options = {
+            body: data.body || "New message received",
+            icon: data.icon || "/logo.png",
+            badge: "/favicon.png",
+            tag: notificationTag,
+            renotify: false, // Strict single alert — do not sound/vibrate again if tag exists
+            requireInteraction: false,
+            vibrate: [200, 100, 200],
+            data: {
+              url: targetUrl,
+              conversationId: convId,
+              messageId: msgId,
+            },
+          };
+
+          return self.registration.showNotification(data.title || "PulseChat", options);
+        });
       })
     );
   } catch (err) {

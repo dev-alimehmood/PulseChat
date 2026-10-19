@@ -115,8 +115,8 @@ const InviteModal = ({ isOpen, onClose, initialEmail = "", onOpenChatWithUser })
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-200/80 dark:border-white/5 bg-slate-50/80 dark:bg-[#0e1630]/80">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#6366f1]/20 via-[#38bdf8]/20 to-[#2dd4bf]/20 border border-[#38bdf8]/30 flex items-center justify-center text-xl shadow-[0_0_15px_rgba(56,189,248,0.25)]">
-              🫀
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#6366f1]/20 via-[#38bdf8]/20 to-[#2dd4bf]/20 border border-[#38bdf8]/30 flex items-center justify-center p-2 shadow-[0_0_15px_rgba(56,189,248,0.25)]">
+              <img src="/logo.png" alt="PulseChat" className="w-6 h-6 object-contain drop-shadow" />
             </div>
             <div>
               <h3 className="font-bold text-base text-slate-900 dark:text-white tracking-tight">

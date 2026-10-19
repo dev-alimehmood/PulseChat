@@ -105,6 +105,7 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack, openNewChat }) =
   const typingTimerRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioTimerRef = useRef(null);
+  const isSubmittingRef = useRef(false);
   const loggedInUserId = Auth?.User?._id;
   const socket = useSocket();
   const navigate = useNavigate();
@@ -256,9 +257,9 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack, openNewChat }) =
           className="relative z-10 max-w-sm flex flex-col items-center"
         >
           {/* Refined Brand Emblem */}
-          <div className="w-20 h-20 rounded-3xl bg-white dark:bg-[#0c1228] border border-slate-200/90 dark:border-white/10 flex items-center justify-center shadow-lg shadow-slate-200/50 dark:shadow-black/50 mb-5 relative group">
-            <span className="text-3xl">🫀</span>
-            <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#2dd4bf] ring-4 ring-slate-50 dark:ring-[#07090e]" />
+          <div className="w-20 h-20 rounded-3xl bg-white dark:bg-[#0c1228] border border-slate-200/90 dark:border-white/10 flex items-center justify-center shadow-lg shadow-slate-200/50 dark:shadow-black/50 mb-5 relative group p-3.5">
+            <img src="/logo.png" alt="PulseChat" className="w-12 h-12 object-contain drop-shadow-md dark:drop-shadow-[0_0_12px_rgba(56,189,248,0.4)]" />
+            <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 ring-2 ring-white dark:ring-transparent shadow-[0_0_10px_rgba(52,211,153,0.9)]" />
           </div>
 
           {/* Brand Heading */}
@@ -493,47 +494,54 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack, openNewChat }) =
       return;
     }
 
-    if ((!text.trim() && !audioBlob && !imageBase64) || sending || uploadingAudio || uploadingImage) return;
+    if ((!text.trim() && !audioBlob && !imageBase64) || sending || uploadingAudio || uploadingImage || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     
     let audioUrl = null;
     let imageUrl = null;
 
-    if (audioBlob) {
-      setUploadingAudio(true);
-      try {
-        audioUrl = await uploadAudioBlob(audioBlob);
-      } catch (err) {
-        console.error("Audio upload failed", err);
-        setUploadingAudio(false);
-        return;
+    try {
+      if (audioBlob) {
+        setUploadingAudio(true);
+        try {
+          audioUrl = await uploadAudioBlob(audioBlob);
+        } catch (err) {
+          console.error("Audio upload failed", err);
+          return;
+        } finally {
+          setUploadingAudio(false);
+        }
       }
-      setUploadingAudio(false);
-    }
 
-    if (imageBase64) {
-      setUploadingImage(true);
-      try {
-        const { data } = await api.post("/messages/upload-image", { image: imageBase64 });
-        imageUrl = data.Location;
-      } catch (err) {
-        console.error("Image upload failed", err);
-        setUploadingImage(false);
-        return;
+      if (imageBase64) {
+        setUploadingImage(true);
+        try {
+          const { data } = await api.post("/messages/upload-image", { image: imageBase64 });
+          imageUrl = data.Location;
+        } catch (err) {
+          console.error("Image upload failed", err);
+          return;
+        } finally {
+          setUploadingImage(false);
+        }
       }
+
+      const msg = text.trim();
+      const reply = replyTo;
+      setText("");
+      setReplyTo(null);
+      setAudioBlob(null);
+      if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
+      setAudioPreviewUrl(null);
+      setImageBase64(null);
+      setImagePreviewUrl(null);
+      emitStopTyping(otherUser?._id);
+      await sendMessage(msg, reply, audioUrl, imageUrl);
+    } finally {
+      isSubmittingRef.current = false;
+      setUploadingAudio(false);
       setUploadingImage(false);
     }
-
-    const msg = text.trim();
-    const reply = replyTo;
-    setText("");
-    setReplyTo(null);
-    setAudioBlob(null);
-    if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
-    setAudioPreviewUrl(null);
-    setImageBase64(null);
-    setImagePreviewUrl(null);
-    emitStopTyping(otherUser?._id);
-    await sendMessage(msg, reply, audioUrl, imageUrl);
   };
 
   const handleKeyDown = (e) => {
@@ -569,7 +577,7 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack, openNewChat }) =
               className="absolute top-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
             >
               <div className="bg-gradient-to-r from-rose-500/90 to-pink-600/90 text-white px-5 py-2 rounded-full text-sm font-semibold shadow-lg shadow-rose-500/30 backdrop-blur-md flex items-center gap-2.5 border border-rose-300/30">
-                <span className="text-lg animate-bounce">🫀</span>
+                <img src="/logo.png" alt="Pulse" className="w-5 h-5 object-contain animate-pulse drop-shadow" />
                 <span>{pulseMessage}</span>
               </div>
             </motion.div>
@@ -998,9 +1006,9 @@ const ChatWindow = ({ conversation, onUserStatusChange, onBack, openNewChat }) =
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.92 }}
             title="Send Pulse Ping"
-            className="hidden sm:flex w-12 h-12 rounded-2xl items-center justify-center transition-all flex-shrink-0 text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 shadow-[0_0_20px_rgba(244,63,94,0.2)] border border-rose-500/30"
+            className="hidden sm:flex w-12 h-12 rounded-2xl items-center justify-center transition-all flex-shrink-0 text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 shadow-[0_0_20px_rgba(244,63,94,0.2)] border border-rose-500/30 p-2.5"
           >
-            <span className="text-xl">🫀</span>
+            <img src="/logo.png" alt="Send Pulse" className="w-6 h-6 object-contain drop-shadow" />
           </motion.button>
           
           <AnimatePresence>

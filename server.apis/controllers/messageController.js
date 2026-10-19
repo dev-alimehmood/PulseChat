@@ -163,12 +163,26 @@ export const sendMessage = async (req, res) => {
             timestamp: newMessage.createdAt,
           });
 
+          // Deduplicate push subscriptions by endpoint to prevent duplicate notifications
+          const uniqueSubscriptions = [];
+          const seenEndpoints = new Set();
+          for (const sub of (receiverUser.pushSubscriptions || [])) {
+            if (sub && sub.endpoint && !seenEndpoints.has(sub.endpoint)) {
+              seenEndpoints.add(sub.endpoint);
+              uniqueSubscriptions.push(sub);
+            }
+          }
+
+          if (uniqueSubscriptions.length !== receiverUser.pushSubscriptions.length) {
+            await User.findByIdAndUpdate(receiverId, { pushSubscriptions: uniqueSubscriptions });
+          }
+
           // Run push notifications asynchronously with high urgency
           (async () => {
             const validSubscriptions = [];
             let subscriptionsChanged = false;
 
-            await Promise.all(receiverUser.pushSubscriptions.map(async (sub) => {
+            await Promise.all(uniqueSubscriptions.map(async (sub) => {
               try {
                 await webpush.sendNotification(sub, payload, {
                   urgency: 'high',

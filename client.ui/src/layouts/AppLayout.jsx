@@ -1,10 +1,12 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
 import Sidebar from "../components/sidebar/Sidebar";
 
 const AppLayout = ({ toggleDark, isDark }) => {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const isChat = location.pathname === "/chatpage" || location.pathname === "/";
+  const isChatOpenOnMobile = isChat && Boolean(searchParams.get("chat"));
 
   useEffect(() => {
     // Always lock window scroll to (0,0) when in the app layout
@@ -34,7 +36,7 @@ const AppLayout = ({ toggleDark, isDark }) => {
         <div className="absolute inset-0 bg-[radial-gradient(rgba(148,163,184,0.12)_1px,transparent_1px)] dark:bg-[radial-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] [background-size:32px_32px] opacity-75 pointer-events-none" />
       </div>
 
-      <Sidebar toggleDark={toggleDark} isDark={isDark} />
+      <Sidebar toggleDark={toggleDark} isDark={isDark} className={isChatOpenOnMobile ? "hidden md:flex" : "flex"} />
       <div className="flex min-w-0 flex-1 flex-col h-full max-h-screen overflow-hidden relative z-10">
         <main className={`flex-1 min-h-0 h-full relative ${isChat ? "overflow-hidden" : "overflow-y-auto custom-scrollbar"}`}>
           <Outlet />

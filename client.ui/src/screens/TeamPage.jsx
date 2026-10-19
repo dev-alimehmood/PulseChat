@@ -9,7 +9,6 @@ import {
   Facebook,
   Globe,
   Mail,
-  Sparkles,
   ShieldCheck,
   Code2,
   Cpu,
@@ -36,10 +35,10 @@ const TeamPage = ({ toggleDark, isDark }) => {
   const founders = [
     {
       id: "ali",
-      name: "Ali",
+      name: "Ali Mehmood",
       role: "Founder & Principal Systems Architect",
       badge: "Full-Stack & Realtime Lead",
-      portrait: "/images/ali_founder.jpg",
+      portrait: "/ali.jpeg",
       bio: "Ali is a Full-Stack Systems Architect with a passion for building high-concurrency web applications. He engineered PulseChat's sub-50ms WebSocket engine, multi-device state synchronization, and obsidian glass design system from the ground up.",
       highlights: [
         "Architected custom multi-threaded WebSocket event pipeline handling 100K+ socket streams.",
@@ -67,7 +66,7 @@ const TeamPage = ({ toggleDark, isDark }) => {
       name: "Muhammad Moeez",
       role: "Co-Founder & Chief Security Officer",
       badge: "Cyber Defense & Encryption Lead",
-      portrait: "/images/moeez_founder.jpg",
+      portrait: "/Moeez.jpeg",
       bio: "Muhammad Moeez directs cybersecurity engineering and network threat defense for PulseChat. He specializes in zero-trust authentication protocols, cryptographic hashing, and automated DDoS rate-limiting to protect user data.",
       highlights: [
         "Implemented stateful JWT authentication guards with auto-expiring session rotation.",
@@ -104,7 +103,7 @@ const TeamPage = ({ toggleDark, isDark }) => {
       description: "Military-grade SHA-256 HMAC payload hashing, multi-layer JWT authentication, and automatic DDoS rate-limiting."
     },
     {
-      icon: Sparkles,
+      icon: Layers,
       title: "Obsidian Glass Design",
       description: "Crafted with dark-mode glassmorphism aesthetics, accessible contrast, and fluid micro-animations."
     }
@@ -174,7 +173,7 @@ const TeamPage = ({ toggleDark, isDark }) => {
                     <img
                       src={founder.portrait}
                       alt={founder.name}
-                      className="w-full h-full object-cover brightness-105 contrast-105"
+                      className="w-full h-full object-cover object-top brightness-105 contrast-105"
                     />
                   </div>
 

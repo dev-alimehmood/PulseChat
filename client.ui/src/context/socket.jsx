@@ -30,7 +30,8 @@ export const SocketProvider = ({ children }) => {
 
     s.on("connect", () => {
       console.log("✅ Socket connected:", s.id);
-      s.emit("userOnline", Auth.User._id);
+      const isVisible = localStorage.getItem("pulse_presence_visible") !== "false" && Auth?.User?.showOnlineStatus !== false;
+      s.emit("userOnline", { userId: Auth.User._id, isVisible });
       socketRef.current = s;
       setSocket(s); // ✅ triggers re-render in ALL consumers
     });

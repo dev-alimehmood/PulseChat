@@ -8,6 +8,7 @@ import InviteModal from "../components/invite/InviteModal";
 import api from "../services/api";
 import { useChat } from "../hooks/useChat";
 import ErrorBoundary from "../components/shared/ErrorBoundary";
+import PulseLoader from "../components/shared/PulseLoader";
 
 const Chatpage = ({ toggleDark }) => {
   const [Auth] = useAuth();
@@ -33,26 +34,37 @@ const Chatpage = ({ toggleDark }) => {
   const handleSelectChat = useCallback((conv) => {
     if (!conv) return;
     setSelectedChat(conv);
+    if (conv._id) {
+      setSearchParams({ chat: conv._id }, { replace: true });
+    }
     if (conv._id && typeof resetUnread === "function") {
       resetUnread(conv._id);
     }
-  }, [resetUnread]);
+  }, [resetUnread, setSearchParams]);
+
+  const handleBack = useCallback(() => {
+    setSelectedChat(null);
+    setSearchParams({}, { replace: true });
+  }, [setSearchParams]);
 
   handleSelectChatRef.current = handleSelectChat;
 
-  // Auto-open chat from URL query parameter only once on initial load
-  const autoOpenedRef = useRef(false);
+  // Synchronize URL query parameter with selected chat state
   useEffect(() => {
-    if (autoOpenedRef.current || !chatParam || conversations.length === 0) return;
-    const match = conversations.find((c) => String(c._id) === String(chatParam));
-    if (match) {
-      autoOpenedRef.current = true;
-      setSelectedChat(match);
-      if (typeof resetUnread === "function") {
-        resetUnread(match._id);
+    if (!chatParam) {
+      setSelectedChat(null);
+      return;
+    }
+    if (conversations.length > 0) {
+      const match = conversations.find((c) => String(c._id) === String(chatParam));
+      if (match && String(selectedChat?._id) !== String(match._id)) {
+        setSelectedChat(match);
+        if (typeof resetUnread === "function") {
+          resetUnread(match._id);
+        }
       }
     }
-  }, [chatParam, conversations, resetUnread]);
+  }, [chatParam, conversations, selectedChat?._id, resetUnread]);
 
   // Listen for navigation events from Service Worker notification clicks
   useEffect(() => {
@@ -135,19 +147,11 @@ const Chatpage = ({ toggleDark }) => {
 
   if (!Auth.isReady) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-[#07090e]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative flex items-center justify-center">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#6366f1]/20 via-[#38bdf8]/20 to-[#2dd4bf]/20 border border-[#2dd4bf]/40 flex items-center justify-center shadow-[0_0_30px_rgba(45,212,191,0.3)] animate-pulse">
-              <span className="text-2xl">🫀</span>
-            </div>
-          </div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#2dd4bf]/30 bg-[#0f172a]/60 text-[#2dd4bf] text-xs font-mono">
-            <span className="w-2 h-2 rounded-full bg-[#2dd4bf] animate-ping" />
-            <span>CONNECTING PULSE NETWORK...</span>
-          </div>
-        </div>
-      </div>
+      <PulseLoader
+        variant="fullscreen"
+        message="Connecting to PulseChat..."
+        subtext="Establishing encrypted connection"
+      />
     );
   }
 
@@ -179,11 +183,11 @@ const Chatpage = ({ toggleDark }) => {
               !selectedChat ? 'hidden md:flex' : 'flex'
             }`}
           >
-            <ErrorBoundary onReset={() => setSelectedChat(null)} title="Conversation Error">
+            <ErrorBoundary onReset={handleBack} title="Conversation Error" compact={true}>
               <ChatWindow
                 conversation={selectedChat}
                 onUserStatusChange={handleUserStatusChange}
-                onBack={() => setSelectedChat(null)}
+                onBack={handleBack}
                 openNewChat={() => setShowNewChat(true)}
               />
             </ErrorBoundary>

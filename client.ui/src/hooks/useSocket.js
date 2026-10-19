@@ -35,7 +35,8 @@ const useSocket = () => {
 
     socketInstance.on("connect", () => {
       console.log("✅ Socket connected:", socketInstance.id);
-      socketInstance.emit("userOnline", Auth.User._id);
+      const isVisible = localStorage.getItem("pulse_presence_visible") !== "false" && Auth?.User?.showOnlineStatus !== false;
+      socketInstance.emit("userOnline", { userId: Auth.User._id, isVisible });
       socketRef.current = socketInstance;
       forceUpdate((n) => n + 1); // ✅ trigger re-render so useChat gets socket
     });

@@ -35,7 +35,7 @@ const ChatList = ({
       <div className="flex items-center justify-between px-4 sm:px-5 h-20 border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 bg-white/40 dark:bg-[#0c1228]/40 backdrop-blur-md min-w-0">
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-xl">🫀</span>
+            <img src="/logo.png" alt="PulseChat" className="w-6 h-6 object-contain drop-shadow" />
             <span className="font-black text-lg tracking-tight bg-gradient-to-r from-[#818cf8] via-[#38bdf8] to-[#2dd4bf] bg-clip-text text-transparent drop-shadow-sm truncate">
               PulseChat
             </span>

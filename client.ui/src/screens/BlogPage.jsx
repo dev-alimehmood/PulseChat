@@ -8,8 +8,7 @@ import {
   Zap,
   Radio,
   ShieldCheck,
-  Cpu,
-  Sparkles
+  Cpu
 } from "lucide-react";
 
 const BlogPage = ({ toggleDark, isDark }) => {
@@ -77,10 +76,9 @@ const BlogPage = ({ toggleDark, isDark }) => {
         
         {/* Hero Section */}
         <div className="text-center max-w-3xl mx-auto space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#2dd4bf]/40 bg-[#0f172a]/80 text-[#2dd4bf] text-xs font-mono tracking-widest uppercase backdrop-blur-xl shadow-inner">
-            <Sparkles className="w-4 h-4 text-[#2dd4bf]" />
+          <span className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#38bdf8] font-bold block">
             ENGINEERING & DESIGN JOURNAL
-          </div>
+          </span>
 
           <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
             Latest Articles & <br />
