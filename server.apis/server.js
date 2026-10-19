@@ -182,8 +182,16 @@ const onlineUsers = {
 io.on("connection", (socket) => {
   console.log("🟢 Socket connected:", socket.id);
 
-  // ================= USER ONLINE =================
-  socket.on("userOnline", async (userId) => {
+  // ================= USER ONLINE & STEALTH PRESENCE =================
+  socket.on("userOnline", async (userIdOrData) => {
+    let userId = userIdOrData;
+    let clientVisibility = undefined;
+
+    if (typeof userIdOrData === "object" && userIdOrData !== null) {
+      userId = userIdOrData.userId;
+      clientVisibility = userIdOrData.isVisible;
+    }
+
     if (!userId) return;
     const strId = userId.toString();
     socket.userId = strId;
@@ -196,15 +204,51 @@ io.on("connection", (socket) => {
     userSocketsMap.get(strId).add(socket.id);
 
     if (isFirstConnection) {
+      try {
+        const currentUser = await User.findById(userId).select("showOnlineStatus");
+        // Check if user turned off online presence (Stealth Mode)
+        const shouldBroadcastOnline = clientVisibility !== undefined 
+          ? Boolean(clientVisibility) 
+          : (currentUser?.showOnlineStatus !== false);
+
+        await User.findByIdAndUpdate(userId, {
+          isOnline: shouldBroadcastOnline,
+          lastSeen: new Date(),
+        });
+
+        io.emit("userStatusChanged", {
+          userId: strId,
+          isOnline: shouldBroadcastOnline,
+          lastSeen: new Date(),
+        });
+      } catch (err) {
+        console.error("userOnline status update error:", err.message);
+      }
+    }
+  });
+
+  // ================= TOGGLE PRESENCE IN REALTIME =================
+  socket.on("togglePresence", async (payload) => {
+    const userId = payload?.userId || socket.userId;
+    const isVisible = Boolean(payload?.isVisible);
+    if (!userId) return;
+
+    const strId = userId.toString();
+    try {
       await User.findByIdAndUpdate(userId, {
-        isOnline: true,
+        showOnlineStatus: isVisible,
+        isOnline: isVisible,
         lastSeen: new Date(),
       });
 
+      // Broadcast immediately across all connected users
       io.emit("userStatusChanged", {
         userId: strId,
-        isOnline: true,
+        isOnline: isVisible,
+        lastSeen: new Date(),
       });
+    } catch (err) {
+      console.error("togglePresence socket error:", err.message);
     }
   });
 
@@ -254,16 +298,20 @@ io.on("connection", (socket) => {
         userSocketsMap.delete(userId);
         const lastSeen = new Date();
 
-        await User.findByIdAndUpdate(userId, {
-          isOnline: false,
-          lastSeen,
-        });
+        try {
+          await User.findByIdAndUpdate(userId, {
+            isOnline: false,
+            lastSeen,
+          });
 
-        io.emit("userStatusChanged", {
-          userId,
-          isOnline: false,
-          lastSeen,
-        });
+          io.emit("userStatusChanged", {
+            userId,
+            isOnline: false,
+            lastSeen,
+          });
+        } catch (err) {
+          console.error("disconnect status update error:", err.message);
+        }
       }
     }
 
@@ -293,12 +341,11 @@ app.use("/api/v1/cusers", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/invites", inviteRoutes);
 
-// ================= START SERVER =================
+// ================= DB & START SERVER =================
 const PORT = process.env.PORT || 5000;
+
+await dbconnect();
 
 httpServer.listen(PORT, () => {
   console.log(`🚀 Server running: http://localhost:${PORT}/api/v1`);
 });
-
-// ================= DB =================
-dbconnect();

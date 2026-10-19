@@ -29,6 +29,7 @@ import SecurityPage from "./screens/SecurityPage"
 import TeamPage from "./screens/TeamPage"
 import BlogPage from "./screens/BlogPage"
 import FounderDocumentary from "./screens/FounderDocumentary"
+import AboutApp from "./screens/info/AboutApp"
 import BackToTop from "./components/shared/BackToTop"
 
 // Automatically scroll window to top whenever location path changes
@@ -83,7 +84,7 @@ const Elecrto = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#090d1b] text-slate-900 dark:text-white transition-colors duration-500 font-['Inter','Segoe_UI',sans-serif]">
-      <div className="opacity-100">
+      <div className="opacity-100 min-h-screen flex flex-col">
         <Router>
           <ScrollToTop />
           <BackToTop />
@@ -95,6 +96,7 @@ const Elecrto = () => {
             <Route path="/team" element={<TeamPage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/founder-documentary" element={<FounderDocumentary toggleDark={toggleDark} isDark={dark} />} />
+            <Route path="/about" element={<AboutApp toggleDark={toggleDark} isDark={dark} />} />
             
             <Route element={<AppLayout toggleDark={toggleDark} isDark={dark} />}>
               <Route path="/chatpage" element={<Chatpage toggleDark={toggleDark} isDark={dark} />} />

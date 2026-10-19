@@ -8,7 +8,6 @@ import {
   Zap,
   ShieldCheck,
   BellRing,
-  Sparkles,
   ArrowRight,
   Sun,
   Moon,
@@ -47,7 +46,7 @@ const LandingPage = ({ toggleDark, isDark }) => {
     {
       id: 1,
       sender: "bot",
-      text: "Hi! I am Pulse AI. How can I help you explore PulseChat today? 🚀",
+      text: "Welcome to PulseChat. Ask me anything about our sub-50ms WebSocket engine, background Web Push, voice messaging, or upcoming Pulse AI integration.",
       time: "Just now"
     }
   ]);
@@ -120,129 +119,143 @@ const LandingPage = ({ toggleDark, isDark }) => {
 
       if (isInsultingFounder) {
         botResponse =
-          "🛡️ Please keep queries respectful toward our founders (Ali & Muhammad Moeez).\n" +
-          "Contact our team directly at ✉️ dev.alimehmood@gmail.com";
+          "Please keep queries respectful toward our engineering leads (Ali & Muhammad Moeez).\n" +
+          "Contact our team directly at dev.alimehmood@gmail.com";
       }
       else if (isNegativeOrAbusive) {
         botResponse =
-          "I can only answer respectful inquiries regarding PulseChat features, performance, security, or leadership.\n" +
-          "Contact: ✉️ dev.alimehmood@gmail.com";
+          "I can answer inquiries regarding PulseChat architecture, latency benchmarks, security standards, and upcoming AI features.\n" +
+          "Contact: dev.alimehmood@gmail.com";
       }
       else if (
         /^(hi|hlo|hello|hey|heyy|heya|hola|greetings|good morning|good afternoon|good evening|yo|sup|whassup)/i.test(lower) ||
         lower === "hi" || lower === "hlo" || lower === "hello" || lower === "hey"
       ) {
-        botResponse = "Hey there! 👋 Welcome to PulseChat AI. What would you like to explore today?";
+        botResponse = "Welcome to PulseChat. Ask me about our real-time WebSocket architecture, Web Push engine, waveform voice messaging, or upcoming Pulse AI integration.";
       } else if (
         lower.includes("how are you") || lower.includes("how r u") || lower.includes("how do you do") || lower.includes("doing today")
       ) {
-        botResponse = "Ready to help! 🚀 All systems are running smoothly at sub-50ms latency.";
+        botResponse = "All systems operational. The WebSocket engine is dispatching events globally at sub-50ms latency.";
       } else if (
         lower.includes("thank") || lower.includes("thx") || lower.includes("awesome") || lower.includes("great") || lower.includes("cool") || lower.includes("nice") || lower.includes("good job")
       ) {
-        botResponse = "You're very welcome! 😊 Let me know if there's anything else you need.";
+        botResponse = "You're welcome. Let me know if you would like to explore our architecture or upcoming AI capabilities.";
+      }
+      else if (
+        lower.includes("ai") || lower.includes("gpt") || lower.includes("intelligence") || lower.includes("upcoming") || lower.includes("summary") || lower.includes("transcription") || lower.includes("assistant")
+      ) {
+        botResponse =
+          "Pulse AI Integration (Active Development):\n" +
+          "• Smart Thread Catch-Up: Condense 200+ missed messages into a 3-bullet briefing in under 5s.\n" +
+          "• In-Chat Copilot (@PulseAI): Mention @PulseAI to draft replies, translate 40+ languages, and query thread context.\n" +
+          "• Neural Audio Transcription: Convert voice notes into clear, readable text in real-time.\n" +
+          "• Zero-Training Isolation: Your direct conversations and voice data are never retained to train public models.";
       }
       else if (
         lower.includes("founder") || lower.includes("creator") || lower.includes("who built") || lower.includes("who made") ||
         lower.includes("ali") || lower.includes("moeez") || lower.includes("owner") || lower.includes("developer") || lower.includes("author")
       ) {
         botResponse =
-          "👑 Founders & Leadership:\n" +
-          "• Ali (Founder & Systems Architect): MERN architecture, WebSocket engine & UI system.\n" +
-          "• Muhammad Moeez (Co-Founder & CSO): Zero-trust security & payload encryption.";
+          "Engineering Leadership:\n" +
+          "• Ali (Full-Stack Systems Architect): Engineered the sub-50ms WebSocket engine, MERN state synchronization, and Obsidian UI system.\n" +
+          "• Muhammad Moeez (Chief Security Officer): Designed zero-trust credential guards, session hardening, and payload encryption.";
       }
       else if (
         lower.includes("what is pulsechat") || lower.includes("what is this") || lower.includes("tell me about") ||
         lower.includes("about pulsechat") || lower.includes("product") || lower.includes("overview") || lower.includes("what can it do")
       ) {
         botResponse =
-          "✨ PulseChat Overview:\n" +
+          "PulseChat Core Overview:\n" +
           "• Sub-50ms real-time global WebSocket messaging\n" +
-          "• Multi-layer JWT session protection & bcrypt encryption\n" +
-          "• Background Web Push notifications & dark glass UI";
+          "• Native Web Push service worker alerts for background offline delivery\n" +
+          "• In-browser audio notes with interactive SVG waveforms\n" +
+          "• Anti-harassment user blocking with quarantined thread recovery\n" +
+          "• Multi-device session synchronization with stateful JWT validation";
       }
       else if (
         lower.includes("speed") || lower.includes("fast") || lower.includes("latency") || lower.includes("performance") ||
         lower.includes("benchmark") || lower.includes("lag") || lower.includes("ms") || lower.includes("socket")
       ) {
         botResponse =
-          "⚡ Speed & Benchmarks:\n" +
-          "• Under 50ms message sync globally\n" +
-          "• Handles 100,000+ active WebSocket connections\n" +
-          "• Zero buffer lag push-and-pull socket streaming";
+          "Speed & Engine Benchmarks:\n" +
+          "• Global message sync under 50ms via persistent Socket.io v4 pipelines\n" +
+          "• Sub-1 second initial application load time with zero webview bloat\n" +
+          "• Lightweight 2-byte binary WebSocket frame streaming";
       }
       else if (
         lower.includes("security") || lower.includes("secure") || lower.includes("encrypt") || lower.includes("private") ||
         lower.includes("privacy") || lower.includes("jwt") || lower.includes("bcrypt") || lower.includes("hack") || lower.includes("safe")
       ) {
         botResponse =
-          "🛡️ Security Defenses:\n" +
-          "• Multi-Layer JWT Auth & bcrypt password hashing\n" +
-          "• TLS 1.3 socket encryption & DDoS connection throttling";
+          "Security Architecture:\n" +
+          "• Stateful JWT token rotation with salted bcrypt password hashing\n" +
+          "• TLS 1.3 socket encryption and automated DDoS connection rate-limiting\n" +
+          "• Complete user-level contact quarantine for anti-harassment defense";
       }
       else if (
         lower.includes("photo") || lower.includes("image") || lower.includes("picture") || lower.includes("file") ||
         lower.includes("voice") || lower.includes("audio") || lower.includes("media") || lower.includes("attachment")
       ) {
         botResponse =
-          "🎙️ Rich Media Features:\n" +
-          "• High-Res photo drag & drop uploads\n" +
-          "• Voice notes with live waveform visualizers\n" +
-          "• Encrypted file & document attachments";
+          "Media & Voice Messaging:\n" +
+          "• In-browser voice notes recorded via HTML5 MediaRecorder API\n" +
+          "• Dynamic SVG waveform visualizer with scrubbable progress bar\n" +
+          "• High-resolution image uploads with optimistic rendering and multi-device preview";
+      }
+      else if (
+        lower.includes("push") || lower.includes("notification") || lower.includes("service worker") || lower.includes("vapid") || lower.includes("background")
+      ) {
+        botResponse =
+          "Native Web Push Engine:\n" +
+          "• VAPID-authenticated Service Worker push pipeline\n" +
+          "• Background notification delivery even when the browser tab is closed or mobile screen is locked\n" +
+          "• Instant audio chime and unread badge synchronization";
       }
       else if (
         lower.includes("block") || lower.includes("ban") || lower.includes("mute") || lower.includes("report") || lower.includes("spam")
       ) {
         botResponse =
-          "🚫 Moderation & Privacy:\n" +
-          "• 1-Click user block & status hide\n" +
-          "• Automatic socket rate-limiting & anti-spam defense\n" +
-          "• Real-time admin network controls";
-      }
-      else if (
-        lower.includes("slack") || lower.includes("discord") || lower.includes("whatsapp") || lower.includes("versus") || lower.includes("compare") || lower.includes("difference")
-      ) {
-        botResponse =
-          "🔥 Key Advantages:\n" +
-          "• Sub-1s instant app load time (no bloated webviews)\n" +
-          "• 100% Free with unlimited message logs & Web Push\n" +
-          "• Eye-friendly dark obsidian glass UI";
+          "Privacy & Contact Controls:\n" +
+          "• One-click contact blocking that isolates unwanted senders immediately\n" +
+          "• Quarantined message storage: blocked messages are held safely and can be reviewed if unblocked\n" +
+          "• Instant real-time socket events notify the UI without page reloads";
       }
       else if (
         lower.includes("tech") || lower.includes("stack") || lower.includes("mern") || lower.includes("react") ||
         lower.includes("node") || lower.includes("express") || lower.includes("mongodb") || lower.includes("code")
       ) {
         botResponse =
-          "💻 Tech Stack:\n" +
-          "• Frontend: React.js, Tailwind CSS, Vite\n" +
-          "• Backend: Node.js, Express microservices, Socket.io\n" +
-          "• Database & PWA: MongoDB, Web Push Service Workers";
+          "Production Technology Stack:\n" +
+          "• Frontend: React 18, Tailwind CSS, Vite, Framer Motion\n" +
+          "• Real-Time Engine: Socket.io v4 bi-directional event bus\n" +
+          "• Backend Services: Node.js, Express microservices, Web Push VAPID\n" +
+          "• Database: MongoDB with optimized compound indexes";
       }
       else if (
         lower.includes("admin") || lower.includes("dashboard") || lower.includes("manage") || lower.includes("analytics") || lower.includes("control")
       ) {
         botResponse =
-          "📊 Admin Suite:\n" +
-          "Executive dashboard to monitor WebSocket threads, server health analytics, user roles, and security policies.";
+          "Administration Suite:\n" +
+          "Comprehensive administrative dashboard for monitoring active socket threads, server health metrics, user moderation, and system audits.";
       }
       else if (
         lower.includes("price") || lower.includes("cost") || lower.includes("free") || lower.includes("pay") || lower.includes("money") || lower.includes("subscription")
       ) {
         botResponse =
-          "🎉 100% Free:\n" +
-          "No credit card, no subscription fees, and no hidden tier limits.";
+          "Pricing:\n" +
+          "PulseChat is free and open to explore. Full real-time messaging, Web Push, and audio notes are included without credit card requirements.";
       }
       else if (
         lower.includes("started") || lower.includes("join") || lower.includes("account") || lower.includes("sign up") || lower.includes("register") || lower.includes("login")
       ) {
         botResponse =
-          "🚀 Get Started:\n" +
-          "Click 'Launch Workspace' at the top to sign up in 3 seconds and start messaging!";
+          "Getting Started:\n" +
+          "Click 'Explore Workspace' or 'Create Free Account' to register in under 30 seconds and connect with your team.";
       }
       else {
         botResponse =
-          "Ask me anything about speed, security, features, or team!\n" +
-          "For direct developer support: ✉️ dev.alimehmood@gmail.com";
+          "Inquire about our sub-50ms WebSocket engine, background Web Push, waveform voice notes, security, or upcoming Pulse AI integration.\n" +
+          "Direct developer contact: dev.alimehmood@gmail.com";
       }
 
       setDemoMessages((prev) => [
@@ -305,11 +318,10 @@ const LandingPage = ({ toggleDark, isDark }) => {
             {/* Left Hero Content */}
             <div className="lg:col-span-6 space-y-8 text-center lg:text-left">
 
-              {/* Theme Match Badge with Glowing Dot */}
-              <div className="inline-flex items-center gap-2.5 px-4.5 py-2 rounded-full border border-[#2dd4bf]/40 bg-[#0f172a]/80 text-[#2dd4bf] text-xs font-mono font-semibold tracking-wide backdrop-blur-xl shadow-[0_0_20px_rgba(45,212,191,0.25)]">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#2dd4bf] animate-ping" />
-                <span>AI-DRIVEN REALTIME INFRASTRUCTURE • V2.4</span>
-              </div>
+              {/* Clean Kicker */}
+              <p className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-[#38bdf8] font-bold">
+                Real-Time Messaging Infrastructure
+              </p>
 
               {/* Bold Title with Animated Flowing Gradient */}
               <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.05] text-white">
@@ -321,7 +333,7 @@ const LandingPage = ({ toggleDark, isDark }) => {
 
               {/* Subheading */}
               <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-xl mx-auto lg:mx-0 font-normal">
-                PulseChat combines ultra-low latency WebSocket streaming, native Web Push background synchronization, and military-grade JWT session control into an exquisite modern interface.
+                PulseChat combines ultra-low latency WebSocket streaming, native background Web Push notifications, interactive waveform voice notes, and zero-trust session security into a refined obsidian interface.
               </p>
 
               {/* CTAs */}
@@ -346,13 +358,16 @@ const LandingPage = ({ toggleDark, isDark }) => {
               {/* Feature Highlights with Checkmarks */}
               <div className="pt-6 flex flex-wrap justify-center lg:justify-start gap-6 text-xs sm:text-sm font-medium text-slate-300">
                 <span className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4.5 h-4.5 text-[#2dd4bf]" /> No code required
+                  <CheckCircle2 className="w-4.5 h-4.5 text-[#2dd4bf]" /> Sub-50ms Socket Sync
                 </span>
                 <span className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4.5 h-4.5 text-[#2dd4bf]" /> Sub-50ms latency
+                  <CheckCircle2 className="w-4.5 h-4.5 text-[#2dd4bf]" /> Background Web Push
                 </span>
                 <span className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4.5 h-4.5 text-[#2dd4bf]" /> Military security
+                  <CheckCircle2 className="w-4.5 h-4.5 text-[#2dd4bf]" /> Waveform Audio Notes
+                </span>
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4.5 h-4.5 text-[#2dd4bf]" /> Pulse AI Arriving Soon
                 </span>
               </div>
 
@@ -361,11 +376,7 @@ const LandingPage = ({ toggleDark, isDark }) => {
             {/* Right Hero Interactive Studio Window with Floating Badges & Equalizer */}
             <div id="demo" className="lg:col-span-6 relative">
 
-              {/* Floating Badge Bottom Right */}
-              <div className="hidden sm:flex absolute -bottom-6 -right-6 z-20 items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-[#0f172a]/90 border border-[#6366f1]/40 text-[#818cf8] text-xs font-mono font-bold shadow-[0_0_30px_rgba(99,102,241,0.3)] backdrop-blur-2xl animate-float-delayed">
-                <ShieldCheck className="w-4 h-4 text-[#818cf8]" />
-                <span>TLS 1.3 Zero-Leak Encrypted</span>
-              </div>
+
 
               {/* Main Studio Container */}
               <div className="relative rounded-3xl border border-[#2dd4bf]/40 bg-[#0b1021]/95 p-5 sm:p-7 shadow-[0_0_90px_rgba(45,212,191,0.22)] backdrop-blur-3xl overflow-hidden group">
@@ -386,14 +397,11 @@ const LandingPage = ({ toggleDark, isDark }) => {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-extrabold text-sm text-white">PulseChat AI Assistant</h4>
-                        <span className="text-[9px] font-mono uppercase bg-[#2dd4bf]/15 text-[#2dd4bf] border border-[#2dd4bf]/40 px-2 py-0.5 rounded-full font-semibold tracking-wider">
-                          LIVE BOT
-                        </span>
+                        <h4 className="font-extrabold text-sm text-white">PulseChat Live Console</h4>
                       </div>
-                      <p className="text-xs text-[#34d399] font-medium flex items-center gap-1.5 mt-0.5">
-                        <span className="w-2 h-2 rounded-full bg-[#2dd4bf] animate-ping" />
-                        Online • WebSocket v2 Active
+                      <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                        Online • Socket Engine Connected
                       </p>
                     </div>
                   </div>
@@ -434,8 +442,8 @@ const LandingPage = ({ toggleDark, isDark }) => {
                               <span className="w-2 h-2 rounded-full bg-[#2dd4bf] animate-pulse" />
                               <span className="text-[11px] font-bold text-white tracking-wide">PulseChat AI</span>
                             </div>
-                            <span className="text-[9px] font-mono text-[#2dd4bf] bg-[#2dd4bf]/10 border border-[#2dd4bf]/30 px-2 py-0.5 rounded-full font-semibold">
-                              ⚡ 38ms SYNC
+                            <span className="text-[10px] font-mono text-emerald-400">
+                              38ms latency
                             </span>
                           </div>
                           <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-medium">
@@ -472,43 +480,43 @@ const LandingPage = ({ toggleDark, isDark }) => {
                   )}
                 </div>
 
-                {/* Quick Interactive Pills */}
+                {/* Quick Interactive Chips */}
                 <div className="mt-4 pt-3 border-t border-white/10 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
                   <button
-                    onClick={() => handleSendDemoMessage("What is PulseChat?")}
-                    className="text-[11px] font-mono whitespace-nowrap px-3.5 py-1.5 rounded-full bg-[#13192e]/80 hover:border-[#2dd4bf] hover:text-[#2dd4bf] border border-white/10 text-slate-300 transition-all shadow-sm hover:scale-105"
+                    onClick={() => handleSendDemoMessage("What is the architecture of PulseChat?")}
+                    className="text-[11px] font-mono whitespace-nowrap px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 hover:text-white border border-white/10 text-slate-300 transition-all cursor-pointer"
                   >
-                    ✨ What is PulseChat?
+                    Architecture
                   </button>
                   <button
-                    onClick={() => handleSendDemoMessage("How fast are messages delivered?")}
-                    className="text-[11px] font-mono whitespace-nowrap px-3.5 py-1.5 rounded-full bg-[#13192e]/80 hover:border-[#2dd4bf] hover:text-[#2dd4bf] border border-white/10 text-slate-300 transition-all shadow-sm hover:scale-105"
+                    onClick={() => handleSendDemoMessage("How fast is the WebSocket engine?")}
+                    className="text-[11px] font-mono whitespace-nowrap px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 hover:text-white border border-white/10 text-slate-300 transition-all cursor-pointer"
                   >
-                    ⚡ Fast speed?
+                    Speed & Latency
                   </button>
                   <button
-                    onClick={() => handleSendDemoMessage("Is end-to-end security included?")}
-                    className="text-[11px] font-mono whitespace-nowrap px-3.5 py-1.5 rounded-full bg-[#13192e]/80 hover:border-[#2dd4bf] hover:text-[#2dd4bf] border border-white/10 text-slate-300 transition-all shadow-sm hover:scale-105"
+                    onClick={() => handleSendDemoMessage("How do Web Push notifications work?")}
+                    className="text-[11px] font-mono whitespace-nowrap px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 hover:text-white border border-white/10 text-slate-300 transition-all cursor-pointer"
                   >
-                    🛡️ Is it secure?
+                    Background Web Push
                   </button>
                   <button
-                    onClick={() => handleSendDemoMessage("What is the tech stack?")}
-                    className="text-[11px] font-mono whitespace-nowrap px-3.5 py-1.5 rounded-full bg-[#13192e]/80 hover:border-[#2dd4bf] hover:text-[#2dd4bf] border border-white/10 text-slate-300 transition-all shadow-sm hover:scale-105"
+                    onClick={() => handleSendDemoMessage("Tell me about voice notes and audio.")}
+                    className="text-[11px] font-mono whitespace-nowrap px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 hover:text-white border border-white/10 text-slate-300 transition-all cursor-pointer"
                   >
-                    💻 Tech Stack?
+                    Voice Waveforms
                   </button>
                   <button
-                    onClick={() => handleSendDemoMessage("Who built PulseChat?")}
-                    className="text-[11px] font-mono whitespace-nowrap px-3.5 py-1.5 rounded-full bg-[#13192e]/80 hover:border-[#2dd4bf] hover:text-[#2dd4bf] border border-white/10 text-slate-300 transition-all shadow-sm hover:scale-105"
+                    onClick={() => handleSendDemoMessage("What AI features are being integrated into PulseChat?")}
+                    className="text-[11px] font-mono whitespace-nowrap px-3.5 py-1.5 rounded-xl bg-[#2dd4bf]/10 hover:bg-[#2dd4bf]/20 text-[#2dd4bf] border border-[#2dd4bf]/30 font-semibold transition-all cursor-pointer"
                   >
-                    👑 Meet Founders
+                    Upcoming Pulse AI
                   </button>
                   <button
-                    onClick={() => handleSendDemoMessage("Is PulseChat free to use?")}
-                    className="text-[11px] font-mono whitespace-nowrap px-3.5 py-1.5 rounded-full bg-[#13192e]/80 hover:border-[#2dd4bf] hover:text-[#2dd4bf] border border-white/10 text-slate-300 transition-all shadow-sm hover:scale-105"
+                    onClick={() => handleSendDemoMessage("What security standards are implemented?")}
+                    className="text-[11px] font-mono whitespace-nowrap px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 hover:text-white border border-white/10 text-slate-300 transition-all cursor-pointer"
                   >
-                    🎉 Is it Free?
+                    Security & Privacy
                   </button>
                 </div>
 
@@ -637,15 +645,14 @@ const LandingPage = ({ toggleDark, isDark }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#2dd4bf]/40 bg-[#0f172a]/80 text-[#2dd4bf] text-xs font-mono uppercase tracking-widest">
-              <Cpu className="w-3.5 h-3.5 text-[#2dd4bf]" />
-              ENGINEERED FOR EXCELLENCE
-            </div>
+            <span className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#38bdf8] font-bold block">
+              CORE SYSTEM ARCHITECTURE
+            </span>
             <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-              Powerful <span className="bg-gradient-to-r from-[#818cf8] via-[#38bdf8] to-[#2dd4bf] bg-clip-text text-transparent">Features. Zero Compromise.</span>
+              Production <span className="bg-gradient-to-r from-[#818cf8] via-[#38bdf8] to-[#2dd4bf] bg-clip-text text-transparent">Real-Time Capabilities</span>
             </h2>
             <p className="text-slate-300 text-base sm:text-lg">
-              Designed for performance-first messaging with every modern luxury tool built right into the core architecture.
+              Engineered for extreme responsiveness with bi-directional streaming, background push alerts, and private voice communication.
             </p>
           </div>
 
@@ -653,70 +660,192 @@ const LandingPage = ({ toggleDark, isDark }) => {
 
             {/* Card 1 */}
             <div className="p-8 rounded-3xl border border-white/10 bg-[#13192e]/80 backdrop-blur-2xl hover:border-[#818cf8]/50 hover:shadow-[0_0_35px_rgba(129,140,248,0.2)] transition-all duration-300 group">
-              <div className="w-14 h-14 rounded-2xl bg-[#090d1b] border border-white/10 text-[#818cf8] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <div className="w-14 h-14 rounded-2xl bg-[#090d1b] border border-white/10 text-[#818cf8] flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
                 <Zap className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-bold mb-3 text-white">WebSocket Engine</h3>
+              <h3 className="text-xl font-bold mb-3 text-white">Sub-50ms Socket Engine</h3>
               <p className="text-slate-400 text-sm leading-relaxed">
-                Bi-directional WebSocket pipelines ensure message delivery, typing indicators, and user presences sync in under 50ms.
+                Bi-directional Socket.io pipelines stream messages, typing indicators, and presence updates globally with zero polling lag.
               </p>
             </div>
 
             {/* Card 2 */}
             <div className="p-8 rounded-3xl border border-white/10 bg-[#13192e]/80 backdrop-blur-2xl hover:border-[#38bdf8]/50 hover:shadow-[0_0_35px_rgba(56,189,248,0.2)] transition-all duration-300 group">
-              <div className="w-14 h-14 rounded-2xl bg-[#090d1b] border border-white/10 text-[#38bdf8] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <div className="w-14 h-14 rounded-2xl bg-[#090d1b] border border-white/10 text-[#38bdf8] flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
                 <BellRing className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-bold mb-3 text-white">Web Push Background Sync</h3>
+              <h3 className="text-xl font-bold mb-3 text-white">Native Web Push Service</h3>
               <p className="text-slate-400 text-sm leading-relaxed">
-                Receive notifications when offline or away from the browser tab with native Web Push service worker integration.
+                VAPID-authenticated Service Worker delivers background notifications even when browser tabs are closed or device is locked.
               </p>
             </div>
 
             {/* Card 3 */}
             <div className="p-8 rounded-3xl border border-white/10 bg-[#13192e]/80 backdrop-blur-2xl hover:border-[#2dd4bf]/50 hover:shadow-[0_0_35px_rgba(45,212,191,0.2)] transition-all duration-300 group">
-              <div className="w-14 h-14 rounded-2xl bg-[#090d1b] border border-white/10 text-[#2dd4bf] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <ShieldCheck className="w-7 h-7" />
+              <div className="w-14 h-14 rounded-2xl bg-[#090d1b] border border-white/10 text-[#2dd4bf] flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                <Radio className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-bold mb-3 text-white">Military JWT Session Auth</h3>
+              <h3 className="text-xl font-bold mb-3 text-white">Waveform Voice Notes</h3>
               <p className="text-slate-400 text-sm leading-relaxed">
-                Stateful authentication guards with salted hashing protocols guarantee that user data remains private and secure.
+                In-browser audio recording via HTML5 MediaRecorder API with interactive SVG waveform visualizer and scrubbable playback.
               </p>
             </div>
 
             {/* Card 4 */}
             <div className="p-8 rounded-3xl border border-white/10 bg-[#13192e]/80 backdrop-blur-2xl hover:border-[#34d399]/50 hover:shadow-[0_0_35px_rgba(52,211,153,0.2)] transition-all duration-300 group">
-              <div className="w-14 h-14 rounded-2xl bg-[#090d1b] border border-white/10 text-[#34d399] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Users className="w-7 h-7" />
+              <div className="w-14 h-14 rounded-2xl bg-[#090d1b] border border-white/10 text-[#34d399] flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                <ShieldCheck className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-bold mb-3 text-white">Instant User Search</h3>
+              <h3 className="text-xl font-bold mb-3 text-white">Quarantined Anti-Harassment</h3>
               <p className="text-slate-400 text-sm leading-relaxed">
-                Find colleagues, teammates, or friends instantly by email or username and launch real-time 1-on-1 conversations.
+                Instant user blocking halts socket delivery and stores incoming messages in a safe quarantine vault—recoverable upon unblock.
               </p>
             </div>
 
             {/* Card 5 */}
             <div className="p-8 rounded-3xl border border-white/10 bg-[#13192e]/80 backdrop-blur-2xl hover:border-[#818cf8]/50 hover:shadow-[0_0_35px_rgba(129,140,248,0.2)] transition-all duration-300 group">
-              <div className="w-14 h-14 rounded-2xl bg-[#090d1b] border border-white/10 text-[#818cf8] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Smartphone className="w-7 h-7" />
+              <div className="w-14 h-14 rounded-2xl bg-[#090d1b] border border-white/10 text-[#818cf8] flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                <Lock className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-bold mb-3 text-white">Responsive Fluid Aesthetics</h3>
+              <h3 className="text-xl font-bold mb-3 text-white">Zero-Trust JWT Security</h3>
               <p className="text-slate-400 text-sm leading-relaxed">
-                Tailored for every viewport from compact smartphones to ultra-wide desktop displays with high-contrast dark modes.
+                Stateful token validation, salted bcrypt password encryption, and TLS 1.3 socket transport protect user communications.
               </p>
             </div>
 
             {/* Card 6 */}
             <div className="p-8 rounded-3xl border border-white/10 bg-[#13192e]/80 backdrop-blur-2xl hover:border-[#38bdf8]/50 hover:shadow-[0_0_35px_rgba(56,189,248,0.2)] transition-all duration-300 group">
-              <div className="w-14 h-14 rounded-2xl bg-[#090d1b] border border-white/10 text-[#38bdf8] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Sliders className="w-7 h-7" />
+              <div className="w-14 h-14 rounded-2xl bg-[#090d1b] border border-white/10 text-[#38bdf8] flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                <Smartphone className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-bold mb-3 text-white">Admin Command Portal</h3>
+              <h3 className="text-xl font-bold mb-3 text-white">Obsidian Responsive UI</h3>
               <p className="text-slate-400 text-sm leading-relaxed">
-                Comprehensive oversight tools allowing system administrators to manage registered users, monitor active chats, and view metrics.
+                Lightweight client architecture tailored for mobile, tablet, and desktop with dedicated full-viewport conversation modes.
               </p>
             </div>
 
+          </div>
+
+        </div>
+      </section>
+
+      {/* DEDICATED UPCOMING PULSE AI INTEGRATION SECTION */}
+      <section id="ai-integration" className="py-24 relative z-10 border-t border-white/10 bg-gradient-to-b from-[#070b16] via-[#080e22] to-[#070b16] overflow-hidden">
+        {/* Subtle Ambient Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-[#6366f1]/10 rounded-full blur-[160px] pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          
+          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+            <span className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#2dd4bf] font-bold block">
+              UPCOMING EXPANSION • NATIVE PULSE AI
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
+              Intelligent Conversations. <br />
+              <span className="bg-gradient-to-r from-[#818cf8] via-[#38bdf8] to-[#2dd4bf] bg-clip-text text-transparent">
+                Accelerated by Native AI.
+              </span>
+            </h2>
+            <p className="text-slate-300 text-base sm:text-lg leading-relaxed font-normal">
+              We are actively developing native AI intelligence directly within PulseChat. From instant thread catch-up to neural voice transcription, intelligence will elevate your conversations without training on your private data.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            {/* AI Card 1 */}
+            <div className="p-7 rounded-3xl border border-white/10 bg-[#0d1428]/90 backdrop-blur-2xl hover:border-[#38bdf8]/40 hover:shadow-[0_0_35px_rgba(56,189,248,0.2)] transition-all duration-300 group flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-[#38bdf8]/10 border border-[#38bdf8]/30 text-[#38bdf8] flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-lg font-bold text-white tracking-tight">Smart Thread Catch-Up</h3>
+                  <span className="text-[10px] font-mono text-[#38bdf8] bg-[#38bdf8]/10 px-2 py-0.5 rounded border border-[#38bdf8]/20">Upcoming</span>
+                </div>
+                <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                  Condense hundreds of unread messages into a 3-bullet executive briefing in under 5 seconds.
+                </p>
+              </div>
+              <div className="pt-6 mt-6 border-t border-white/5 text-[11px] font-mono text-slate-500">
+                Contextual Thread Summaries
+              </div>
+            </div>
+
+            {/* AI Card 2 */}
+            <div className="p-7 rounded-3xl border border-white/10 bg-[#0d1428]/90 backdrop-blur-2xl hover:border-[#2dd4bf]/40 hover:shadow-[0_0_35px_rgba(45,212,191,0.2)] transition-all duration-300 group flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-[#2dd4bf]/10 border border-[#2dd4bf]/30 text-[#2dd4bf] flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                  <Bot className="w-6 h-6" />
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-lg font-bold text-white tracking-tight">In-Chat Neural Copilot</h3>
+                  <span className="text-[10px] font-mono text-[#2dd4bf] bg-[#2dd4bf]/10 px-2 py-0.5 rounded border border-[#2dd4bf]/20">Upcoming</span>
+                </div>
+                <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                  Mention @PulseAI to rephrase drafts, translate across 40+ languages, and query thread decisions in real-time.
+                </p>
+              </div>
+              <div className="pt-6 mt-6 border-t border-white/5 text-[11px] font-mono text-slate-500">
+                In-line Conversational Assistant
+              </div>
+            </div>
+
+            {/* AI Card 3 */}
+            <div className="p-7 rounded-3xl border border-white/10 bg-[#0d1428]/90 backdrop-blur-2xl hover:border-[#818cf8]/40 hover:shadow-[0_0_35px_rgba(129,140,248,0.2)] transition-all duration-300 group flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-[#818cf8]/10 border border-[#818cf8]/30 text-[#818cf8] flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                  <Radio className="w-6 h-6" />
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-lg font-bold text-white tracking-tight">Voice-to-Text Audio</h3>
+                  <span className="text-[10px] font-mono text-[#818cf8] bg-[#818cf8]/10 px-2 py-0.5 rounded border border-[#818cf8]/20">Upcoming</span>
+                </div>
+                <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                  Instant edge audio transcription converts incoming voice notes into clean, readable text when you cannot listen.
+                </p>
+              </div>
+              <div className="pt-6 mt-6 border-t border-white/5 text-[11px] font-mono text-slate-500">
+                Neural Speech Transcription
+              </div>
+            </div>
+
+            {/* AI Card 4 */}
+            <div className="p-7 rounded-3xl border border-white/10 bg-[#0d1428]/90 backdrop-blur-2xl hover:border-emerald-400/40 hover:shadow-[0_0_35px_rgba(52,211,153,0.2)] transition-all duration-300 group flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-emerald-400/10 border border-emerald-400/30 text-emerald-400 flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-lg font-bold text-white tracking-tight">Zero-Training Privacy</h3>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">Guaranteed</span>
+                </div>
+                <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                  Your chat logs, voice notes, and media will strictly never be retained or used to train public machine learning models.
+                </p>
+              </div>
+              <div className="pt-6 mt-6 border-t border-white/5 text-[11px] font-mono text-slate-500">
+                Sandboxed Private Inference
+              </div>
+            </div>
+
+          </div>
+
+          {/* AI Roadmap Status Bar */}
+          <div className="mt-10 p-5 rounded-2xl border border-white/10 bg-[#0d1428]/60 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+              <span className="text-xs sm:text-sm text-slate-300 font-medium">
+                Pulse AI Architecture in active internal engineering. Private beta testing releasing soon.
+              </span>
+            </div>
+            <Link
+              to="/signup"
+              className="text-xs font-mono font-bold text-[#2dd4bf] hover:text-white flex items-center gap-1.5 transition-colors shrink-0"
+            >
+              <span>Join Early Access List</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
 
         </div>
@@ -745,8 +874,8 @@ const LandingPage = ({ toggleDark, isDark }) => {
                 <thead>
                   <tr className="border-b border-white/10 bg-[#0b1021]/80 text-xs font-mono uppercase text-slate-400">
                     <th className="py-5 px-6 font-semibold">Architectural Spec</th>
-                    <th className="py-5 px-6 font-semibold text-[#2dd4bf] flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-[#2dd4bf]" /> PulseChat Protocol
+                    <th className="py-5 px-6 font-semibold text-[#2dd4bf]">
+                      PulseChat Protocol
                     </th>
                     <th className="py-5 px-6 font-semibold text-slate-400">Legacy HTTP Polling</th>
                   </tr>
@@ -979,6 +1108,99 @@ const LandingPage = ({ toggleDark, isDark }) => {
         </div>
       </section>
 
+      {/* Executive Co-Founders Spotlight */}
+      <section className="py-20 bg-[#070b18] border-t border-white/10 relative z-10 overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[250px] bg-gradient-to-r from-[#6366f1]/10 via-[#38bdf8]/10 to-[#2dd4bf]/10 blur-[120px] pointer-events-none" />
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
+            <span className="text-[11px] font-mono uppercase tracking-[0.25em] text-[#38bdf8] font-bold block">
+              LEADERSHIP & ARCHITECTURE
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+              Engineered by Co-Founders Ali Mehmood & Muhammad Moeez
+            </h2>
+            <p className="text-sm text-slate-400 leading-relaxed">
+              PulseChat was founded to eliminate the compromise between real-time sub-15ms latency and zero-trust user privacy.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Ali Mehmood */}
+            <div className="rounded-3xl border border-white/10 bg-[#0c1228]/80 backdrop-blur-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6 hover:border-[#38bdf8]/40 hover:shadow-[0_0_30px_rgba(56,189,248,0.2)] transition-all group">
+              <div className="relative w-28 h-36 sm:w-32 sm:h-40 rounded-2xl p-1 bg-gradient-to-tr from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] shrink-0 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                <div className="w-full h-full rounded-[14px] overflow-hidden bg-slate-900">
+                  <img
+                    src="/ali.jpeg"
+                    alt="Ali Mehmood"
+                    className="w-full h-full object-cover object-top hover:scale-110 transition-transform duration-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2 text-center sm:text-left flex-1 min-w-0">
+                <span className="inline-block px-3 py-0.5 rounded-full bg-[#38bdf8]/10 text-[#38bdf8] border border-[#38bdf8]/30 text-[10px] font-mono font-bold tracking-wider uppercase">
+                  Systems Architect
+                </span>
+                <h3 className="text-2xl font-bold text-white tracking-tight flex items-center justify-center sm:justify-start gap-2">
+                  Ali Mehmood
+                  <CheckCircle2 className="w-5 h-5 text-[#38bdf8] shrink-0" />
+                </h3>
+                <p className="text-xs font-mono text-[#38bdf8]">Co-Founder & Principal Architect</p>
+                <p className="text-xs text-slate-300 leading-relaxed pt-1">
+                  Architected PulseChat's multi-tenant WebSocket engine, AWS S3 cloud media pipeline, and responsive full-stack MERN client.
+                </p>
+                <div className="pt-3">
+                  <Link
+                    to="/team"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#38bdf8] hover:text-white transition-colors"
+                  >
+                    <span>View Engineering Bio</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Muhammad Moeez */}
+            <div className="rounded-3xl border border-white/10 bg-[#0c1228]/80 backdrop-blur-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6 hover:border-emerald-500/40 hover:shadow-[0_0_30px_rgba(52,211,153,0.2)] transition-all group">
+              <div className="relative w-28 h-36 sm:w-32 sm:h-40 rounded-2xl p-1 bg-gradient-to-tr from-emerald-400 via-teal-500 to-indigo-600 shrink-0 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                <div className="w-full h-full rounded-[14px] overflow-hidden bg-slate-900">
+                  <img
+                    src="/Moeez.jpeg"
+                    alt="Muhammad Moeez"
+                    className="w-full h-full object-cover object-top hover:scale-110 transition-transform duration-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2 text-center sm:text-left flex-1 min-w-0">
+                <span className="inline-block px-3 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono font-bold tracking-wider uppercase">
+                  Cyber Defense
+                </span>
+                <h3 className="text-2xl font-bold text-white tracking-tight flex items-center justify-center sm:justify-start gap-2">
+                  Muhammad Moeez
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                </h3>
+                <p className="text-xs font-mono text-emerald-400">Co-Founder & Chief Security Officer</p>
+                <p className="text-xs text-slate-300 leading-relaxed pt-1">
+                  Engineered Zero-Trust session guards, HMAC SHA-256 verification, and zero-leak stealth presence isolation.
+                </p>
+                <div className="pt-3">
+                  <Link
+                    to="/team"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 hover:text-white transition-colors"
+                  >
+                    <span>View Security Bio</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Bottom CTA Banner */}
       <section className="py-24 relative overflow-hidden bg-gradient-to-b from-[#090d1b] to-[#060812]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
@@ -1009,18 +1231,14 @@ const LandingPage = ({ toggleDark, isDark }) => {
             {/* Modal Header */}
             <div className="px-4 py-3 sm:px-5 sm:py-3.5 bg-gradient-to-r from-[#13192e] via-[#0f172a] to-[#090d1b] border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="relative group">
-                  <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] opacity-85 blur-sm group-hover:opacity-100 transition-opacity animate-pulse" />
-                  <div className="relative w-10 h-10 rounded-xl bg-[#090d1b] border border-white/20 flex items-center justify-center shadow-inner">
-                    <Bot className="w-5 h-5 text-[#2dd4bf] drop-shadow-[0_0_8px_rgba(45,212,191,0.8)]" />
-                    <Sparkles className="w-3 h-3 text-[#38bdf8] absolute -top-1 -right-1 animate-spin" style={{ animationDuration: '5s' }} />
-                  </div>
+                <div className="w-10 h-10 rounded-xl bg-[#38bdf8]/15 border border-[#38bdf8]/30 flex items-center justify-center text-[#38bdf8]">
+                  <Bot className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">PulseChat AI</h3>
+                  <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">PulseChat Assistant</h3>
                   <p className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5 font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#34d399] animate-pulse" />
-                    Active AI Assistant
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    Interactive Console
                   </p>
                 </div>
               </div>
@@ -1075,36 +1293,42 @@ const LandingPage = ({ toggleDark, isDark }) => {
             </div>
 
             {/* Quick Interactive Chips */}
-            <div className="py-2 px-3 border-t border-white/10 bg-[#0d1224] flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <div className="py-2 px-3 border-t border-white/10 bg-[#0d1224] flex items-center gap-2 overflow-x-auto no-scrollbar">
               <button
-                onClick={() => handleSendDemoMessage("Who built PulseChat?")}
-                className="text-[11px] font-mono whitespace-nowrap px-3 py-1 rounded-full bg-white/5 hover:bg-[#2dd4bf]/20 hover:text-[#2dd4bf] border border-white/10 text-slate-300 transition-all hover:scale-105"
+                onClick={() => handleSendDemoMessage("What is the architecture of PulseChat?")}
+                className="text-[11px] font-mono whitespace-nowrap px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 hover:text-white border border-white/10 text-slate-300 transition-all cursor-pointer"
               >
-                👑 Meet Founders
+                Architecture
               </button>
               <button
-                onClick={() => handleSendDemoMessage("How fast is PulseChat?")}
-                className="text-[11px] font-mono whitespace-nowrap px-3 py-1 rounded-full bg-white/5 hover:bg-[#2dd4bf]/20 hover:text-[#2dd4bf] border border-white/10 text-slate-300 transition-all hover:scale-105"
+                onClick={() => handleSendDemoMessage("How fast is the WebSocket engine?")}
+                className="text-[11px] font-mono whitespace-nowrap px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 hover:text-white border border-white/10 text-slate-300 transition-all cursor-pointer"
               >
-                ⚡ Speed & Engine
+                Speed & Latency
               </button>
               <button
-                onClick={() => handleSendDemoMessage("Is end-to-end security included?")}
-                className="text-[11px] font-mono whitespace-nowrap px-3 py-1 rounded-full bg-white/5 hover:bg-[#2dd4bf]/20 hover:text-[#2dd4bf] border border-white/10 text-slate-300 transition-all hover:scale-105"
+                onClick={() => handleSendDemoMessage("How do Web Push notifications work?")}
+                className="text-[11px] font-mono whitespace-nowrap px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 hover:text-white border border-white/10 text-slate-300 transition-all cursor-pointer"
               >
-                🛡️ Zero-Trust Security
+                Background Web Push
               </button>
               <button
-                onClick={() => handleSendDemoMessage("What is the tech stack?")}
-                className="text-[11px] font-mono whitespace-nowrap px-3 py-1 rounded-full bg-white/5 hover:bg-[#2dd4bf]/20 hover:text-[#2dd4bf] border border-white/10 text-slate-300 transition-all hover:scale-105"
+                onClick={() => handleSendDemoMessage("Tell me about voice notes and audio.")}
+                className="text-[11px] font-mono whitespace-nowrap px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 hover:text-white border border-white/10 text-slate-300 transition-all cursor-pointer"
               >
-                💻 Tech Stack
+                Voice Waveforms
               </button>
               <button
-                onClick={() => handleSendDemoMessage("Is PulseChat free?")}
-                className="text-[11px] font-mono whitespace-nowrap px-3 py-1 rounded-full bg-white/5 hover:bg-[#2dd4bf]/20 hover:text-[#2dd4bf] border border-white/10 text-slate-300 transition-all hover:scale-105"
+                onClick={() => handleSendDemoMessage("What AI features are being integrated into PulseChat?")}
+                className="text-[11px] font-mono whitespace-nowrap px-3 py-1 rounded-lg bg-[#2dd4bf]/10 hover:bg-[#2dd4bf]/20 text-[#2dd4bf] border border-[#2dd4bf]/30 font-semibold transition-all cursor-pointer"
               >
-                🎉 Is it Free?
+                Upcoming Pulse AI
+              </button>
+              <button
+                onClick={() => handleSendDemoMessage("What security standards are implemented?")}
+                className="text-[11px] font-mono whitespace-nowrap px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 hover:text-white border border-white/10 text-slate-300 transition-all cursor-pointer"
+              >
+                Security & Privacy
               </button>
             </div>
 
@@ -1135,35 +1359,29 @@ const LandingPage = ({ toggleDark, isDark }) => {
         </div>
       )}
 
-      {/* Floating AI Launcher Badge Button (Bottom Right) */}
+      {/* Floating Assistant Launcher Button (Bottom Right) */}
       <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
-        {/* Desktop Expanded Pill Button */}
+        {/* Desktop Button */}
         <button
           onClick={() => setIsFloatingChatOpen(!isFloatingChatOpen)}
-          className="hidden sm:flex group relative items-center gap-3 px-5 py-3.5 rounded-full bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-slate-950 font-black shadow-[0_0_35px_rgba(45,212,191,0.6)] hover:shadow-[0_0_50px_rgba(45,212,191,0.85)] hover:scale-105 transition-all duration-300 border border-white/40 cursor-pointer"
+          className="hidden sm:flex group items-center gap-3 px-5 py-3 rounded-2xl bg-[#0d1428] hover:bg-[#131b34] text-white font-semibold shadow-2xl border border-white/15 hover:border-[#38bdf8]/40 transition-all duration-300 cursor-pointer"
         >
-          <div className="relative flex items-center justify-center">
-            <div className="w-8 h-8 rounded-xl bg-slate-950/20 flex items-center justify-center border border-slate-950/20 group-hover:scale-110 transition-transform">
-              <Bot className="w-5 h-5 text-slate-950 group-hover:rotate-12 transition-transform drop-shadow" />
-            </div>
-            <Sparkles className="w-3.5 h-3.5 text-slate-950 absolute -top-1.5 -right-1.5 animate-spin" style={{ animationDuration: "5s" }} />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#090d1b] animate-ping" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#090d1b]" />
+          <div className="w-8 h-8 rounded-xl bg-[#38bdf8]/15 text-[#38bdf8] flex items-center justify-center border border-[#38bdf8]/30">
+            <Bot className="w-4 h-4" />
           </div>
-          <span className="text-xs font-black tracking-wider uppercase">Pulse AI Assistant</span>
-          <span className="ml-1 px-2.5 py-0.5 rounded-full bg-slate-950 text-[#2dd4bf] text-[10px] font-mono font-extrabold shadow-sm">
-            {isFloatingChatOpen ? "Close" : "PRO AI"}
+          <span className="text-xs font-bold tracking-wide">Pulse Assistant</span>
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-slate-400 border border-white/10">
+            {isFloatingChatOpen ? "Close" : "Console"}
           </span>
         </button>
 
-        {/* Mobile Compact Circular Floating Button */}
+        {/* Mobile Button */}
         <button
           onClick={() => setIsFloatingChatOpen(!isFloatingChatOpen)}
-          className="sm:hidden w-12 h-12 rounded-full bg-gradient-to-r from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] text-slate-950 shadow-[0_0_25px_rgba(45,212,191,0.7)] active:scale-95 transition-all flex items-center justify-center border border-white/40 cursor-pointer relative"
-          aria-label="Open Pulse AI Assistant"
+          className="sm:hidden w-12 h-12 rounded-2xl bg-[#0d1428] text-white shadow-2xl active:scale-95 transition-all flex items-center justify-center border border-white/20 cursor-pointer"
+          aria-label="Open Pulse Assistant"
         >
-          <Bot className="w-6 h-6 text-slate-950" />
-          <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#090d1b] animate-pulse" />
+          <Bot className="w-5 h-5 text-[#38bdf8]" />
         </button>
       </div>
 

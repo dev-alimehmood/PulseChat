@@ -168,9 +168,11 @@ export const useMessages = (conversationId) => {
   }, [socket]); // ✅ re-subscribe when socket reconnects
 
   // ── Send message ────────────────────────────────────────────────────────────
+  const isSendingRef = useRef(false);
   const sendMessage = useCallback(
     async (text, replyTo = null, audioUrl = null, imageUrl = null) => {
-      if ((!text.trim() && !audioUrl && !imageUrl) || !conversationId || sending) return;
+      if ((!text.trim() && !audioUrl && !imageUrl) || !conversationId || isSendingRef.current) return;
+      isSendingRef.current = true;
       setSending(true);
 
       const optimisticId = `opt_${Date.now()}`;
@@ -224,10 +226,11 @@ export const useMessages = (conversationId) => {
           errortoast(backendMessage || "Failed to send message.");
         }
       } finally {
+        isSendingRef.current = false;
         setSending(false);
       }
     },
-    [conversationId, sending, loggedInUserId]
+    [conversationId, loggedInUserId]
   );
 
   // ── Typing emitters ─────────────────────────────────────────────────────────

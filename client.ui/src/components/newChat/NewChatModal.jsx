@@ -67,7 +67,7 @@ const NewChatModal = ({ onSelectUser, onClose, onOpenInvite }) => {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/80 dark:border-white/5 bg-slate-50/80 dark:bg-[#0e1630]/80">
           <div className="flex items-center gap-2">
-            <span className="text-lg">🫀</span>
+            <img src="/logo.png" alt="PulseChat" className="w-5 h-5 object-contain" />
             <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white">
               Start New Thread
             </span>

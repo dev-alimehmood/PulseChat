@@ -14,6 +14,7 @@ import nodemailer from "nodemailer";
 import Conversation from "../models/conversation.js";
 import Message from "../models/message.js";
 import { io, onlineUsers } from "../server.js";
+import { sendPulseEmail } from "../helpers/mailer.js";
 
 
 const pvalidator = new Schema
@@ -45,27 +46,14 @@ const preSignup = async (req, res) => {
     // Include refUserId in token if registered via invite
     const token = jwt.sign({ full_name, email, password, refUserId: refUserId || null }, JWT_SECRET, { expiresIn: "4h" })
     
-    const transporter = nodemailer.createTransport({
-      service: "Gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS, // or app password if 2FA is on
-      },
-    });
-    await transporter.sendMail({
-      from: `"PulseChat" <${process.env.EMAIL_USER}>`,
+    await sendPulseEmail({
       to: email,
-      subject: "Verify Your Email - PulseChat",
-      html: `<div style="font-family: sans-serif; padding: 20px; background: #0c1228; color: #f8fafc; border-radius: 12px;">
-        <h2 style="color: #38bdf8;">Welcome to PulseChat!</h2>
-        <p>Please click the button below to verify your email and activate your account:</p>
-        <p style="margin: 24px 0;">
-          <a href="${CLIENT_URL}/${token}" style="background: linear-gradient(135deg, #6366f1, #38bdf8); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
-            Activate Account
-          </a>
-        </p>
-        <p style="font-size: 12px; color: #94a3b8;">If you did not sign up for PulseChat, you can safely ignore this email.</p>
-      </div>`,
+      subject: "Verify Your Email Address — PulseChat",
+      headline: "Welcome to PulseChat!",
+      bodyHtml: `<p>Hello <strong>${full_name}</strong>,</p><p>Thank you for creating an account on PulseChat. Please click the button below to verify your email address and activate your encrypted workspace:</p>`,
+      actionUrl: `${CLIENT_URL}/${token}`,
+      actionText: "Activate My Account",
+      footerNote: "This activation link expires in 4 hours. If you did not sign up for PulseChat, you can safely ignore this email.",
     });
 
     success("We have sent you a verification link, please check your email address", res)
@@ -186,24 +174,14 @@ const forgetPassword = async (req, res) => {
     User.otp = otp
     await User.save()
 
-    const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER, // your Gmail
-    pass: process.env.EMAIL_PASS, // App Password (NOT normal password)
-  },
-});
-await transporter.sendMail({
-    from: `"ChatMe" <alimehmood.dev@gmail.com>`,
-    to: email,
-    subject: "Forget Password OTP",
-    html: `
-      <p>Below is your OTP</p>
-      <span style="font-size:45px; color:orange; letter-spacing:8px;">
-        ${otp}
-      </span>
-    `,
-  });
+    await sendPulseEmail({
+      to: email,
+      subject: "Your Password Reset Code — PulseChat",
+      headline: "Reset Your Password",
+      bodyHtml: `<p>We received a request to reset the password for your PulseChat account. Enter the verification passcode below to continue with password recovery:</p>`,
+      otpCode: otp,
+      footerNote: "If you did not request a password reset, your account remains secure. Please do not share this passcode with anyone.",
+    });
 
   success("OTP sent to your email", res);
 } catch (err) {
@@ -327,23 +305,43 @@ const updateProfile = async (req, res) => {
     const id = req.user.id;
     if (!id) return error("Unauthorized", res);
 
-    const { bio, city, state, countrypostalcode, adress, gender, dob, phonenumber, profilepicture, full_name } = req.body;
+    const { bio, city, state, countrypostalcode, adress, gender, dob, phonenumber, profilepicture, full_name, showOnlineStatus } = req.body;
+
+    const updateFields = {
+      bio,
+      city,
+      state,
+      countrypostalcode,
+      adress,
+      gender,
+      dob,
+      phonenumber,
+      profilepicture,
+      full_name,
+    };
+
+    if (showOnlineStatus !== undefined) {
+      const isVisible = Boolean(showOnlineStatus);
+      updateFields.showOnlineStatus = isVisible;
+      updateFields.isOnline = isVisible;
+      updateFields.lastSeen = new Date();
+
+      // Realtime broadcast to all connected clients immediately
+      try {
+        io?.emit("userStatusChanged", {
+          userId: id.toString(),
+          isOnline: isVisible,
+          lastSeen: updateFields.lastSeen,
+        });
+      } catch (e) {
+        console.error("updateProfile socket broadcast error:", e.message);
+      }
+    }
 
     const updatedUser = await user.findByIdAndUpdate(
       id,
       {
-        $set: {
-          bio,
-          city,
-          state,
-          countrypostalcode,
-          adress,
-          gender,
-          dob,
-          phonenumber,
-          profilepicture,
-          full_name
-        }
+        $set: updateFields
       },
       { new: true } // return updated document
     );
@@ -434,6 +432,7 @@ const getUserDashboardStats = async (req, res) => {
         maxMessages,
         totalMessagesSent,
         profileCompletion,
+        showOnlineStatus: currentUser.showOnlineStatus !== false,
         blockedUsers: currentUser.blockedUsers || []
       }
     }, res);

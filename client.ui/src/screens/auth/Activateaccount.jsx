@@ -4,7 +4,7 @@ import { errortoast, successtoast } from "../../toastify/toastify.js";
 import apis from "../../config/apis";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { CheckCircle2, AlertCircle, ArrowRight, Sparkles } from "lucide-react";
+import { CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
 import AuthLayout from "./AuthLayout";
 
 const Activateaccount = () => {
@@ -55,8 +55,8 @@ const Activateaccount = () => {
             {/* Glowing Logo with Spinner */}
             <div className="relative mb-6">
               <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#6366f1]/30 via-[#38bdf8]/30 to-[#2dd4bf]/30 blur-xl animate-pulse" />
-              <div className="relative w-20 h-20 rounded-3xl bg-[#0f152d] border border-[#38bdf8]/40 flex items-center justify-center text-3xl shadow-[0_0_35px_rgba(56,189,248,0.25)]">
-                <span className="animate-pulse">🫀</span>
+              <div className="relative w-20 h-20 rounded-3xl bg-[#0f152d] border border-[#38bdf8]/40 flex items-center justify-center p-3 shadow-[0_0_35px_rgba(56,189,248,0.25)]">
+                <img src="/logo.png" alt="PulseChat" className="w-full h-full object-contain animate-pulse drop-shadow-[0_0_12px_rgba(56,189,248,0.5)]" />
               </div>
             </div>
 
@@ -89,10 +89,7 @@ const Activateaccount = () => {
               </div>
             </div>
 
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#2dd4bf]/10 border border-[#2dd4bf]/30 text-xs font-semibold text-[#2dd4bf] mb-3">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Verified & Active</span>
-            </div>
+
 
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
               Welcome to PulseChat!

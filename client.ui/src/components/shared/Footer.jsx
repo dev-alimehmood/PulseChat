@@ -10,17 +10,22 @@ const Footer = () => {
           {/* Brand Info */}
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] flex items-center justify-center text-slate-950 font-bold shadow-lg">
-                <MessageSquare className="w-5 h-5 text-slate-950" />
-              </div>
-              <span className="font-black text-white text-xl tracking-tight font-sans">PulseChat</span>
+              <img
+                src="/logo.png"
+                alt="PulseChat"
+                className="w-9 h-9 object-contain drop-shadow-[0_0_12px_rgba(56,189,248,0.4)]"
+              />
+              <span className="font-black text-white text-xl tracking-tight font-sans flex items-center">
+                <span className="text-red-500">Pulse</span>
+                <span className="text-sky-400">Chat</span>
+              </span>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
               Next-generation real-time communication platform built on ultra-low latency WebSockets, Web Push alerts, and military-grade JWT session controls.
             </p>
-            <div className="flex items-center gap-2 text-xs text-[#2dd4bf] font-mono">
-              <span className="w-2 h-2 rounded-full bg-[#2dd4bf] animate-ping" />
-              All Systems Operational • 99.99% Uptime Standard
+            <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span>All Systems Operational • 99.99% Uptime</span>
             </div>
           </div>
 
@@ -61,6 +66,8 @@ const Footer = () => {
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <div>
             &copy; {new Date().getFullYear()} PulseChat Technologies Inc. All rights reserved.
+            <span className="hidden sm:inline mx-2 text-slate-600">•</span>
+            <span className="block sm:inline text-slate-400">Co-Founded & Engineered by <span className="text-slate-200 font-semibold">Ali Mehmood</span> & <span className="text-slate-200 font-semibold">Muhammad Moeez</span></span>
           </div>
           <div className="flex gap-6">
             <Link to="/security" className="hover:text-[#2dd4bf] transition-colors">Privacy Policy</Link>

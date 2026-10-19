@@ -82,7 +82,6 @@ const OTP = () => {
 
   return (
     <AuthLayout
-      badge="🔑 Two-Factor Verification"
       heroTitle="Validate Your Authorized Session."
       heroSubtitle="Confirm your identity with the 5-digit verification code sent to your email to safely regain access to your conversations."
       cardTitle="Enter Verification Code"
@@ -97,8 +96,7 @@ const OTP = () => {
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#6366f1]/20 via-[#38bdf8]/20 to-[#2dd4bf]/20 border border-[#38bdf8]/40 flex items-center justify-center text-[#38bdf8] shadow-[0_0_25px_rgba(56,189,248,0.25)]">
               <KeyRound className="w-7 h-7" />
             </div>
-            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#2dd4bf] animate-ping" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#2dd4bf]" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-white dark:border-[#0c1228]" />
           </div>
         </div>
 

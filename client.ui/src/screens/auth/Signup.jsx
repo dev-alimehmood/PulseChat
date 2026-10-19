@@ -1,6 +1,6 @@
 import { useFormik } from "formik";
 import { useState } from "react";
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle2, Sparkles, ExternalLink } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle2, UserPlus, ExternalLink } from "lucide-react";
 import { SignUpSchema } from "../../Schemas/Index";
 import { Link, useSearchParams } from "react-router-dom";
 import axios from "axios";
@@ -8,6 +8,7 @@ import apis from "../../config/apis";
 import { errortoast, successtoast } from "../../toastify/toastify";
 import { motion } from "framer-motion";
 import AuthLayout from "./AuthLayout";
+import { getFriendlyErrorMessage } from "../../utils/friendlyError";
 
 const SignUp = () => {
   const [searchParams] = useSearchParams();
@@ -56,11 +57,12 @@ const SignUp = () => {
         }
 
         if (error) {
-          action.setFieldError("email", error);
+          action.setFieldError("email", getFriendlyErrorMessage(error, "An account with this email already exists."));
         }
       } catch (err) {
         console.error("Signup error:", err?.response?.data || err.message);
-        errortoast(err?.response?.data?.message || err?.response?.data?.error || "Registration failed. Please check your data.");
+        const friendly = getFriendlyErrorMessage(err, "Registration failed. Please check your data and try again.");
+        errortoast(friendly);
       } finally {
         setLoading(false);
       }
@@ -77,7 +79,6 @@ const SignUp = () => {
 
   return (
     <AuthLayout
-      badge="🚀 Fast Registration & Invite Sync"
       heroTitle="Step into the Next-Gen Chat Ecosystem."
       heroSubtitle="Experience true sub-50ms latency messaging, end-to-end privacy, and crystal-clear audio calls from any browser."
       cardTitle={emailSent ? "" : "Create Your Account"}
@@ -139,23 +140,22 @@ const SignUp = () => {
       ) : (
         /* Signup Form */
         <div>
-          {/* Invite Welcome VIP Banner */}
+          {/* Invite Welcome Banner */}
           {refUserId && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-[#6366f1]/15 via-[#38bdf8]/15 to-[#2dd4bf]/15 border border-[#38bdf8]/40 flex items-center gap-3.5 shadow-[0_0_25px_rgba(56,189,248,0.2)]"
+              className="mb-6 p-4 rounded-2xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 flex items-center gap-3.5 backdrop-blur-md"
             >
-              <div className="w-10 h-10 rounded-xl bg-[#38bdf8]/20 flex items-center justify-center text-xl shrink-0">
-                🎉
+              <div className="w-10 h-10 rounded-xl bg-[#38bdf8]/10 text-[#38bdf8] flex items-center justify-center shrink-0">
+                <UserPlus className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <span>Exclusive Friend Invite</span>
-                  <Sparkles className="w-3.5 h-3.5 text-[#2dd4bf]" />
+                <p className="text-xs font-bold text-slate-900 dark:text-white">
+                  Invited by a Teammate
                 </p>
-                <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">
-                  Complete signup to automatically add your inviter to your chat list!
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Complete signup to automatically connect with your inviter.
                 </p>
               </div>
             </motion.div>

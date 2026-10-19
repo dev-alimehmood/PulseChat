@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, ShieldCheck, Zap } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, ShieldCheck, Zap, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import apis from "../../config/apis";
@@ -7,6 +7,7 @@ import { errortoast, successtoast, warningtoast } from "../../toastify/toastify"
 import { useAuth } from "../../context/auth";
 import { motion } from "framer-motion";
 import AuthLayout from "./AuthLayout";
+import { getFriendlyErrorMessage } from "../../utils/friendlyError";
 
 const Login = () => {
   const [Auth, setAuth] = useAuth();
@@ -24,6 +25,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [user, setUser] = useState({
     email: "",
@@ -33,12 +35,17 @@ const Login = () => {
   const changehandler = (e) => {
     const { name, value } = e.target;
     setUser((prev) => ({ ...prev, [name]: value }));
+    if (errorMessage) setErrorMessage("");
   };
 
   const loginhandler = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
+
     if (!user.email || !user.password) {
-      warningtoast("Please provide both email and password");
+      const msg = "Please provide both email and password";
+      setErrorMessage(msg);
+      warningtoast(msg);
       return;
     }
 
@@ -49,7 +56,9 @@ const Login = () => {
       const { error, warning, success } = data;
 
       if (error) {
-        errortoast(error);
+        const friendly = getFriendlyErrorMessage(error, "Login failed. Please verify your credentials.");
+        setErrorMessage(friendly);
+        errortoast(friendly);
         setLoading(false);
         return;
       }
@@ -77,7 +86,9 @@ const Login = () => {
       }
     } catch (err) {
       console.error("Login error:", err?.response?.data || err.message);
-      errortoast(err?.response?.data?.message || err?.response?.data?.error || "Login failed. Please verify credentials.");
+      const friendly = getFriendlyErrorMessage(err, "Login failed. Please verify your credentials.");
+      setErrorMessage(friendly);
+      errortoast(friendly);
     } finally {
       setLoading(false);
     }
@@ -85,7 +96,6 @@ const Login = () => {
 
   return (
     <AuthLayout
-      badge="⚡ Sub-50ms Socket Engine"
       heroTitle="Real-time communication, elevated to perfection."
       heroSubtitle="Log back into PulseChat to stay connected with your team, enjoy crystal-clear audio, and experience military-grade privacy."
       cardTitle="Welcome Back"
@@ -93,6 +103,18 @@ const Login = () => {
     >
       <form onSubmit={loginhandler} className="space-y-5">
         
+        {/* Inline Error Notice */}
+        {errorMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2.5 leading-relaxed shadow-sm"
+          >
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
+            <span className="font-medium">{errorMessage}</span>
+          </motion.div>
+        )}
+
         {/* Email Address */}
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">

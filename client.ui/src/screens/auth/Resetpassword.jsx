@@ -95,7 +95,6 @@ const ResetPassword = () => {
 
   return (
     <AuthLayout
-      badge="🛡️ Account Credential Hardening"
       heroTitle="Secure Your PulseChat Identity."
       heroSubtitle="Create a new, resilient password to safeguard your chat history, voice exchanges, and shared media files."
       cardTitle="Reset Password"

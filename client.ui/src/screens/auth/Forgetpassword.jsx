@@ -84,7 +84,6 @@ const ForgotPassword = () => {
 
   return (
     <AuthLayout
-      badge="🔒 Encrypted Account Recovery"
       heroTitle="Recover and Reclaim Your Account."
       heroSubtitle="Forgot your credentials? We've got you covered. Provide your email address and we'll instantly generate an authorized 5-digit verification code."
       cardTitle="Reset Password"

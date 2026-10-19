@@ -34,7 +34,7 @@ const ForwardModal = ({ isOpen, onClose, onForward }) => {
       <div className="bg-white dark:bg-[#0c1228] rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] border border-slate-200/80 dark:border-white/10 transition-all">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/80 dark:border-white/5 bg-slate-50/80 dark:bg-[#0e1630]/80">
           <div className="flex items-center gap-2">
-            <span className="text-lg">🫀</span>
+            <img src="/logo.png" alt="PulseChat" className="w-5 h-5 object-contain" />
             <h2 className="text-base font-bold text-slate-900 dark:text-white">Forward Message</h2>
           </div>
           <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">

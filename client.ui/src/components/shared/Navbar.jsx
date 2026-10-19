@@ -42,18 +42,19 @@ const Navbar = () => {
         
         {/* Brand Logo */}
         <div className="flex items-center gap-4">
-          <Link to="/" onClick={closeMenu} className="flex items-center gap-3.5 group">
+          <Link to="/" onClick={closeMenu} className="flex items-center gap-3 group">
             <div className="relative">
-              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-[#6366f1] via-[#38bdf8] to-[#2dd4bf] p-[1.5px] shadow-[0_0_25px_rgba(45,212,191,0.3)] group-hover:shadow-[0_0_35px_rgba(56,189,248,0.5)] group-hover:scale-105 transition-all duration-300">
-                <div className="w-full h-full bg-[#0b1021] rounded-[14px] flex items-center justify-center">
-                  <MessageSquare className="w-5 h-5 text-[#38bdf8] group-hover:text-[#2dd4bf] transition-colors" />
-                </div>
-              </div>
-              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-[#2dd4bf] rounded-full ring-4 ring-[#090d1b] animate-pulse" />
+              <img
+                src="/logo.png"
+                alt="PulseChat Logo"
+                className="w-10 h-10 sm:w-11 sm:h-11 object-contain drop-shadow-[0_0_15px_rgba(56,189,248,0.5)] group-hover:scale-105 transition-transform"
+              />
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full ring-2 ring-[#090d1b] animate-pulse" />
             </div>
 
-            <span className="text-xl sm:text-2xl font-black tracking-tight text-white font-sans">
-              PulseChat
+            <span className="text-xl sm:text-2xl font-black tracking-tight text-white font-sans flex items-center">
+              <span className="bg-gradient-to-r from-red-500 via-rose-500 to-indigo-400 bg-clip-text text-transparent">Pulse</span>
+              <span className="bg-gradient-to-r from-sky-400 to-teal-400 bg-clip-text text-transparent">Chat</span>
             </span>
           </Link>
         </div>
