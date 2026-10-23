@@ -4,6 +4,30 @@ import { useSocket } from "./useSocket";
 import { useAuth } from "../context/auth";
 import { errortoast } from "../toastify/toastify";
 
+const mergeMessages = (current, incoming) => {
+  const byId = new Map();
+
+  for (const message of [...current, ...incoming]) {
+    const id = message?._id;
+    if (id == null) continue;
+
+    const key = String(id);
+    byId.set(key, { ...byId.get(key), ...message });
+  }
+
+  return Array.from(byId.values()).sort((a, b) => {
+    const aTime = Date.parse(a.createdAt) || 0;
+    const bTime = Date.parse(b.createdAt) || 0;
+    return aTime - bTime;
+  });
+};
+
+const getMessageList = (data) => {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.messages)) return data.messages;
+  return [];
+};
+
 export const useMessages = (conversationId) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -14,48 +38,53 @@ export const useMessages = (conversationId) => {
   const loggedInUserId = Auth?.User?._id;
 
   const convIdRef = useRef(conversationId);
-  useEffect(() => {
-    convIdRef.current = conversationId;
-  }, [conversationId]);
+  const typingTimeoutRef = useRef(null);
+  convIdRef.current = conversationId;
   console.log("useMessages socket:", socket?.id, "connected:", socket?.connected);
+
+  const fetchMessages = useCallback(async (targetConversationId, signal) => {
+    const { data } = await api.get(`/messages/${targetConversationId}`, signal ? { signal } : undefined);
+    if (String(convIdRef.current) !== String(targetConversationId)) return;
+    setMessages((current) => mergeMessages(current, getMessageList(data)));
+  }, []);
+
   // ── Fetch messages ──────────────────────────────────────────────────────────
   useEffect(() => {
+    clearTimeout(typingTimeoutRef.current);
+    setTypingUsers(false);
+
     if (!conversationId) {
       setMessages([]);
+      setLoading(false);
       return;
     }
 
     const controller = new AbortController();
+    setMessages([]);
+    setLoading(true);
 
-    const fetchMessages = async () => {
-      setLoading(true);
-      try {
-        const { data } = await api.get(`/messages/${conversationId}`, {
-          signal: controller.signal,
-        });
-        const messageList = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.messages)
-          ? data.messages
-          : [];
-        setMessages(messageList);
-      } catch (err) {
+    fetchMessages(conversationId, controller.signal)
+      .catch((err) => {
         if (err?.name !== "CanceledError" && err?.code !== "ERR_CANCELED") {
           console.error("fetchMessages error:", err);
         }
-      } finally {
-        setLoading(false);
-      }
-    };
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
 
-    fetchMessages();
-    return () => controller.abort();
-  }, [conversationId]);
+    return () => {
+      controller.abort();
+      clearTimeout(typingTimeoutRef.current);
+    };
+  }, [conversationId, fetchMessages]);
 
   // ── Mark as seen when conversation opens ───────────────────────────────────
   useEffect(() => {
     if (!conversationId) return;
-    api.put(`/messages/seen/${conversationId}`).catch(() => { });
+    api.put(`/messages/seen/${conversationId}`).catch((err) => {
+      console.error("markMessagesSeen error:", err);
+    });
   }, [conversationId]);
 
   // ── Socket listeners — re-subscribe when socket changes ────────────────────
@@ -64,20 +93,25 @@ export const useMessages = (conversationId) => {
 
     console.log("✅ useMessages subscribing to socket");
 
-    // ✅ new message — append to bubbles
+    // ── new message — append to bubbles ─────────────────────────────────────
     const handleNewMessage = (msg) => {
       console.log("💬 bubble newMessage:", msg.text, "conv:", msg.conversationId, "current:", convIdRef.current);
       if (String(msg.conversationId) !== String(convIdRef.current)) return;
-      setMessages((prev) => {
-        const exists = prev.some((m) => String(m._id) === String(msg._id));
-        if (exists) return prev;
-        return [...prev, msg];
+      setMessages((prev) => mergeMessages(prev, [msg]));
+      api.put(`/messages/seen/${msg.conversationId}`).catch((err) => {
+        console.error("markMessagesSeen error:", err);
       });
-      // ✅ auto mark seen since conversation is open
-      api.put(`/messages/seen/${msg.conversationId}`).catch(() => { });
     };
 
-    // ✅ message status update — sent → delivered → seen
+    const handleConnect = () => {
+      const activeConversationId = convIdRef.current;
+      if (!activeConversationId) return;
+      fetchMessages(activeConversationId).catch((err) => {
+        console.error("reconnect message sync error:", err);
+      });
+    };
+
+    // ── message status update — sent → delivered → seen ─────────────────────
     const handleStatusUpdate = ({ messageId, status }) => {
       console.log("📊 status update:", messageId, "→", status);
       setMessages((prev) =>
@@ -89,7 +123,7 @@ export const useMessages = (conversationId) => {
       );
     };
 
-    // ✅ all messages seen — turn all my ticks blue
+    // ── all messages seen — turn all my ticks blue ──────────────────────────
     const handleMessagesSeen = ({ conversationId: convId }) => {
       console.log("👁 messagesSeen for conv:", convId, "current:", convIdRef.current);
       if (String(convId) !== String(convIdRef.current)) return;
@@ -98,7 +132,7 @@ export const useMessages = (conversationId) => {
       );
     };
 
-    // ✅ message deleted
+    // ── message deleted ─────────────────────────────────────────────────────
     const handleDeleteMessage = ({ messageId }) => {
       setMessages((prev) =>
         prev.map((m) =>
@@ -109,7 +143,7 @@ export const useMessages = (conversationId) => {
       );
     };
 
-    // ✅ message edited
+    // ── message edited ──────────────────────────────────────────────────────
     const handleEditMessage = ({ messageId, text, editedAt }) => {
       setMessages((prev) =>
         prev.map((m) =>
@@ -120,18 +154,21 @@ export const useMessages = (conversationId) => {
       );
     };
 
-    // ✅ typing
+    // ── typing ──────────────────────────────────────────────────────────────
     const handleTyping = ({ conversationId: convId }) => {
       if (String(convId) !== String(convIdRef.current)) return;
+      clearTimeout(typingTimeoutRef.current);
       setTypingUsers(true);
+      typingTimeoutRef.current = setTimeout(() => setTypingUsers(false), 3000);
     };
 
     const handleStopTyping = ({ conversationId: convId }) => {
       if (String(convId) !== String(convIdRef.current)) return;
+      clearTimeout(typingTimeoutRef.current);
       setTypingUsers(false);
     };
 
-    // ✅ message downloaded
+    // ── message downloaded ──────────────────────────────────────────────────
     const handleMessageDownloaded = ({ messageId, downloadedBy }) => {
       setMessages((prev) =>
         prev.map((m) => {
@@ -146,6 +183,7 @@ export const useMessages = (conversationId) => {
       );
     };
 
+    socket.on("connect", handleConnect);
     socket.on("newMessage", handleNewMessage);
     socket.on("messageStatusUpdated", handleStatusUpdate);
     socket.on("messagesSeen", handleMessagesSeen);
@@ -156,6 +194,7 @@ export const useMessages = (conversationId) => {
     socket.on("stopTyping", handleStopTyping);
 
     return () => {
+      socket.off("connect", handleConnect);
       socket.off("newMessage", handleNewMessage);
       socket.off("messageStatusUpdated", handleStatusUpdate);
       socket.off("messagesSeen", handleMessagesSeen);
@@ -164,8 +203,9 @@ export const useMessages = (conversationId) => {
       socket.off("messageDownloaded", handleMessageDownloaded);
       socket.off("typing", handleTyping);
       socket.off("stopTyping", handleStopTyping);
+      clearTimeout(typingTimeoutRef.current);
     };
-  }, [socket]); // ✅ re-subscribe when socket reconnects
+  }, [socket, fetchMessages]);
 
   // ── Send message ────────────────────────────────────────────────────────────
   const isSendingRef = useRef(false);
@@ -236,7 +276,7 @@ export const useMessages = (conversationId) => {
   // ── Typing emitters ─────────────────────────────────────────────────────────
   const emitTyping = useCallback(
     (receiverId) => {
-      if (!socket || !conversationId || !receiverId) return;
+      if (!socket?.connected || !conversationId || !receiverId) return;
       socket.emit("typing", { conversationId, receiverId });
     },
     [socket, conversationId]
@@ -244,7 +284,7 @@ export const useMessages = (conversationId) => {
 
   const emitStopTyping = useCallback(
     (receiverId) => {
-      if (!socket || !conversationId || !receiverId) return;
+      if (!socket?.connected || !conversationId || !receiverId) return;
       socket.emit("stopTyping", { conversationId, receiverId });
     },
     [socket, conversationId]
