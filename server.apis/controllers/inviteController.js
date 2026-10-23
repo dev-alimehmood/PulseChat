@@ -1,5 +1,5 @@
 import User from "../models/user.models.js";
-import { sendPulseEmail } from "../helpers/mailer.js";
+import { sendPulseEmail, sendInvitationEmail } from "../helpers/mailer.js";
 
 /**
  * Send an email invitation to someone not yet on PulseChat
@@ -48,14 +48,11 @@ export const sendEmailInvite = async (req, res) => {
 
     const inviteLink = `${baseUrl}/signup?ref=${inviter._id}&email=${encodeURIComponent(cleanEmail)}`;
 
-    await sendPulseEmail({
+    await sendInvitationEmail({
       to: cleanEmail,
-      subject: `[PulseChat] ${inviterName} invited you to join PulseChat`,
-      headline: `${inviterName} invited you to connect`,
-      bodyHtml: `<p><strong>${inviterName}</strong> has invited you to connect on PulseChat — high-speed encrypted messaging with instant voice notes and media sharing.</p>${noteHtml}`,
-      actionUrl: inviteLink,
-      actionText: "Accept Invitation & Join",
-      footerNote: "You received this invitation because your colleague invited you to PulseChat. If you do not wish to join, no action is needed.",
+      inviterName,
+      personalMessage,
+      inviteUrl: inviteLink,
     });
 
     return res.status(200).json({

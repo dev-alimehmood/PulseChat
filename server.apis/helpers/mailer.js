@@ -1,20 +1,10 @@
 import nodemailer from "nodemailer";
-import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Locate email logo asset for CID attachment (avoiding large base64 inline strings)
-const emailLogoPath = path.resolve(__dirname, "../../client.ui/public/email_logo.png");
-const hasLocalLogo = fs.existsSync(emailLogoPath);
-
-// Singleton Transporter with connection pooling for maximum speed and deliverability
+// Reusable Transporter with connection pooling for maximum speed and deliverability
 const transporter = nodemailer.createTransport({
   service: "gmail",
   pool: true,
-  maxConnections: 5,
+  maxConnections: 3,
   maxMessages: 100,
   auth: {
     user: process.env.EMAIL_USER || "alimehmood.dev@gmail.com",
@@ -23,10 +13,10 @@ const transporter = nodemailer.createTransport({
 });
 
 /**
- * Strips HTML tags to generate a clean plain-text alternative.
- * Plain-text alternative is RFC-mandated and drastically lowers spam score.
+ * Strips HTML tags to generate a clean, accurate plain-text alternative.
+ * Matching plain-text is RFC-mandated and prevents spam filter penalties.
  */
-function htmlToPlainText(html) {
+function htmlToPlainText(html = "") {
   return html
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
@@ -45,96 +35,135 @@ function htmlToPlainText(html) {
 }
 
 /**
- * Generate anti-spam compliant, responsive HTML email.
- * - Table-based bulletproof email markup.
- * - Balanced image-to-text ratio.
- * - Legitimate sender identification & physical company footnote.
- * - Clear action triggers and security guidance.
+ * Build an executive, modern, responsive HTML email template.
+ * - Pure CSS vector branding: No attachments, eliminating attachment scanning/quarantine.
+ * - High deliverability: Clean semantic HTML without spam-triggering keywords.
+ * - Outlook VML support for bulletproof buttons.
  */
 export function buildPulseEmailHtml({
-  title = "PulseChat Notification",
+  title = "PulseChat",
+  preheader = "Important notification regarding your PulseChat account",
   headline = "",
+  greetingName = "",
   bodyHtml = "",
   actionUrl = "",
   actionText = "",
   otpCode = "",
-  footerNote = "If you did not request this communication, you can safely ignore this email.",
-  clientUrl = process.env.CLIENT_URL || "https://pulsechat-ali.netlify.app",
+  footerNote = "If you didn't request this email, you can safely ignore it.",
 }) {
-  const logoSrc = hasLocalLogo ? "cid:pulsechat-logo" : `${clientUrl}/logo.png`;
+  const currentYear = new Date().getFullYear();
+  const previewPadding = "&zwnj;&nbsp;".repeat(25);
 
   return `<!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="x-apple-disable-message-reformatting">
   <title>${title}</title>
   <!--[if mso]>
   <style>
-    table, td, p, a { font-family: Arial, sans-serif !important; }
+    table, td, p, a, span, h1, h2 { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif !important; }
   </style>
+  <xml>
+    <o:OfficeDocumentSettings>
+      <o:AllowPNG/>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+  </xml>
   <![endif]-->
+  <style>
+    @media only screen and (max-width: 600px) {
+      .email-container { width: 100% !important; padding: 12px !important; }
+      .content-padding { padding: 24px 20px !important; }
+      .otp-code { font-size: 32px !important; letter-spacing: 6px !important; }
+    }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #080c1b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #f1f5f9;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #080c1b; margin: 0; padding: 40px 16px;">
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #1e293b; line-height: 1.6;">
+
+  <!-- Preheader preview text for inbox list -->
+  <div style="display: none; font-size: 1px; color: #f8fafc; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all;">
+    ${preheader} ${previewPadding}
+  </div>
+
+  <!-- Outer Canvas Table -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; margin: 0; padding: 32px 12px;">
     <tr>
       <td align="center">
-        <!-- Main Card Wrapper -->
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 520px; background-color: #0d142c; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px; overflow: hidden; box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);">
+        
+        <!-- Main Card Container -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 520px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);">
           
-          <!-- Brand Accent Bar -->
+          <!-- Top Branded Gradient Bar -->
           <tr>
-            <td style="height: 4px; background: linear-gradient(90deg, #6366f1 0%, #38bdf8 50%, #2dd4bf 100%); line-height: 4px; font-size: 0;">&nbsp;</td>
+            <td style="height: 4px; background: linear-gradient(90deg, #6366f1 0%, #0ea5e9 50%, #10b981 100%); line-height: 4px; font-size: 0;">&nbsp;</td>
           </tr>
 
-          <!-- Header -->
+          <!-- Header Section with Pure CSS PulseChat Branding -->
           <tr>
-            <td align="center" style="padding: 32px 24px 20px; background-color: #0e1733;">
+            <td align="center" style="padding: 28px 32px 18px; background-color: #ffffff;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center">
-                    <img src="${logoSrc}" width="54" height="46" alt="PulseChat" style="display: block; margin: 0 auto 12px; border: 0; outline: none; text-decoration: none;" />
+                    <!-- Clean SVG Vector Emblem (Zero Attachments) -->
+                    <div style="display: inline-block; width: 44px; height: 44px; background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%); border-radius: 12px; line-height: 44px; text-align: center; color: #ffffff; font-size: 22px; font-weight: bold; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.25);">
+                      ⚡
+                    </div>
                   </td>
                 </tr>
                 <tr>
                   <td align="center">
-                    <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">
-                      <span style="color: #ef4444;">Pulse</span><span style="color: #38bdf8;">Chat</span>
+                    <h1 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: #0f172a;">
+                      <span style="color: #ef4444;">Pulse</span><span style="color: #0284c7;">Chat</span>
                     </h1>
-                    <p style="margin: 4px 0 0; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #94a3b8; font-weight: 600;">
-                      Real-Time Encrypted Messaging
-                    </p>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- Body Content -->
+          <!-- Divider -->
           <tr>
-            <td style="padding: 24px 32px 32px; color: #cbd5e1; font-size: 15px; line-height: 1.65;">
-              ${headline ? `<h2 style="margin: 0 0 16px; font-size: 18px; font-weight: 700; color: #ffffff; letter-spacing: -0.2px;">${headline}</h2>` : ""}
+            <td style="padding: 0 32px;">
+              <div style="border-top: 1px solid #f1f5f9;"></div>
+            </td>
+          </tr>
+
+          <!-- Email Content Body -->
+          <tr>
+            <td class="content-padding" style="padding: 24px 32px 32px; color: #334155; font-size: 15px; line-height: 1.65;">
               
-              <div style="color: #cbd5e1; font-size: 14px; line-height: 1.65;">
+              ${headline ? `
+                <h2 style="margin: 0 0 14px; font-size: 18px; font-weight: 700; color: #0f172a; letter-spacing: -0.2px;">
+                  ${headline}
+                </h2>
+              ` : ""}
+
+              ${greetingName ? `
+                <p style="margin: 0 0 12px; font-size: 15px; font-weight: 600; color: #1e293b;">
+                  Hello ${greetingName},
+                </p>
+              ` : ""}
+
+              <div style="color: #334155; font-size: 15px; line-height: 1.65;">
                 ${bodyHtml}
               </div>
 
-              <!-- OTP Verification Box (if applicable) -->
+              <!-- OTP Passcode Box (if applicable) -->
               ${otpCode ? `
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0; background-color: #091024; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 14px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 22px 0; background-color: #f8fafc; border: 1.5px dashed #0284c7; border-radius: 12px;">
                   <tr>
-                    <td align="center" style="padding: 20px;">
-                      <span style="display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #38bdf8; font-weight: 700; margin-bottom: 6px;">
-                        One-Time Security Passcode
+                    <td align="center" style="padding: 20px 16px;">
+                      <span style="display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #0284c7; font-weight: 700; margin-bottom: 6px;">
+                        Verification Code
                       </span>
-                      <div style="font-family: 'SF Pro Text', Consolas, Monaco, monospace; font-size: 34px; font-weight: 800; letter-spacing: 8px; color: #ffffff; padding: 6px 0;">
+                      <div class="otp-code" style="font-family: 'SF Pro Display', Consolas, Monaco, monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #0f172a; padding: 6px 0; user-select: all;">
                         ${otpCode}
                       </div>
-                      <span style="display: block; font-size: 11px; color: #94a3b8; margin-top: 6px;">
-                        Valid for 10 minutes • Keep this confidential
-                      </span>
+                      <div style="margin-top: 6px; font-size: 12px; color: #64748b;">
+                        Expires in 10 minutes
+                      </div>
                     </td>
                   </tr>
                 </table>
@@ -142,48 +171,52 @@ export function buildPulseEmailHtml({
 
               <!-- Primary Action Button (if applicable) -->
               ${actionUrl && actionText ? `
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 28px 0 16px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0 16px;">
                   <tr>
                     <td align="center">
                       <!--[if mso]>
-                      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${actionUrl}" style="height:44px;v-text-anchor:middle;width:240px;" arcsize="25%" stroke="f" fillcolor="#38bdf8">
+                      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${actionUrl}" style="height:46px;v-text-anchor:middle;width:240px;" arcsize="20%" stroke="f" fillcolor="#0284c7">
                         <w:anchorlock/>
-                        <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;">${actionText}</center>
+                        <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:bold;">${actionText}</center>
                       </v:roundrect>
                       <![endif]-->
-                      <a href="${actionUrl}" target="_blank" style="mso-hide:all; display: inline-block; padding: 13px 32px; background: #0284c7; background: linear-gradient(135deg, #6366f1 0%, #0284c7 100%); color: #ffffff; font-size: 14px; font-weight: 700; text-decoration: none; border-radius: 12px; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4); text-align: center;">
+                      <a href="${actionUrl}" target="_blank" style="mso-hide: all; display: inline-block; padding: 13px 32px; background: #0284c7; background: linear-gradient(135deg, #4f46e5 0%, #0284c7 100%); color: #ffffff !important; font-size: 15px; font-weight: 700; text-decoration: none; border-radius: 10px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3); text-align: center;">
                         ${actionText} &rarr;
                       </a>
                     </td>
                   </tr>
                 </table>
+
+                <!-- Fallback URL -->
+                <div style="margin-top: 18px; padding: 10px 12px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; color: #64748b; line-height: 1.5;">
+                  If the button doesn't work, copy and paste this link:
+                  <div style="margin-top: 4px; word-break: break-all;">
+                    <a href="${actionUrl}" target="_blank" style="color: #0284c7;">${actionUrl}</a>
+                  </div>
+                </div>
               ` : ""}
 
-              <!-- Security / Disregard Footnote -->
+              <!-- Footnote -->
               ${footerNote ? `
-                <p style="margin: 24px 0 0; font-size: 12px; color: #64748b; line-height: 1.5; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 16px;">
+                <p style="margin: 20px 0 0; font-size: 12px; color: #64748b; line-height: 1.5; border-top: 1px solid #f1f5f9; padding-top: 14px;">
                   ${footerNote}
                 </p>
               ` : ""}
+
             </td>
           </tr>
 
-          <!-- Email Footer with Legal & Deliverability Compliance -->
+          <!-- Email Footer -->
           <tr>
-            <td style="padding: 20px 24px; background-color: #080d1e; border-top: 1px solid rgba(255, 255, 255, 0.08); text-align: center;">
-              <p style="margin: 0; font-size: 11px; color: #64748b; line-height: 1.4;">
-                &copy; ${new Date().getFullYear()} PulseChat Technologies Inc. All rights reserved.
-              </p>
-              <p style="margin: 4px 0 0; font-size: 11px; color: #475569;">
-                Co-Founded & Engineered by Ali Mehmood & Muhammad Moeez
-              </p>
-              <p style="margin: 8px 0 0; font-size: 10px; color: #475569;">
-                This is an automated security communication for your PulseChat account. Please do not reply directly to this message.
+            <td style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+              <p style="margin: 0; font-size: 11px; color: #64748b;">
+                PulseChat &bull; Real-Time Messaging &bull; &copy; ${currentYear}
               </p>
             </td>
           </tr>
 
         </table>
+
       </td>
     </tr>
   </table>
@@ -192,18 +225,21 @@ export function buildPulseEmailHtml({
 }
 
 /**
- * High-deliverability email dispatcher.
- * Incorporates:
- * 1. Matching Plain-Text alternative body (RFC 2046 compliant)
- * 2. CID inline attachment (replaces spam-prone base64 strings)
- * 3. Verified headers (X-Mailer, X-Priority: 3, Reply-To, List-Unsubscribe)
- * 4. Graceful error handling and delivery logging
+ * Clean, high-deliverability email dispatcher.
+ * Deliverability Architecture:
+ * 1. Clean RFC 2822 sender formatting: "PulseChat <email>".
+ * 2. Authentic DKIM signatures from Google's SMTP servers.
+ * 3. NO fake/bulk headers (removed Auto-Submitted, Precedence, X-Priority).
+ * 4. Zero attachment payload (eliminates sandbox delays & antivirus flags).
+ * 5. Full RFC 2046 plain-text multipart match.
  */
 export async function sendPulseEmail({
   to,
   subject,
   title,
+  preheader,
   headline,
+  greetingName = "",
   bodyHtml,
   bodyText,
   actionUrl,
@@ -211,63 +247,122 @@ export async function sendPulseEmail({
   otpCode,
   footerNote,
 }) {
+  const senderName = process.env.EMAIL_FROM_NAME || "PulseChat";
   const senderEmail = process.env.EMAIL_USER || "alimehmood.dev@gmail.com";
-  const clientUrl = process.env.CLIENT_URL || "https://pulsechat-ali.netlify.app";
 
-  const emailTitle = title || subject || "PulseChat Notification";
+  const emailTitle = title || subject || "PulseChat";
+  const emailHeadline = headline || "";
+  const emailPreheader =
+    preheader ||
+    (otpCode
+      ? `Your verification code is ${otpCode}`
+      : actionText
+      ? `${actionText} - PulseChat`
+      : "Notification from PulseChat");
+
   const html = buildPulseEmailHtml({
     title: emailTitle,
-    headline: headline || subject,
+    preheader: emailPreheader,
+    headline: emailHeadline,
+    greetingName,
     bodyHtml,
     actionUrl,
     actionText,
     otpCode,
     footerNote,
-    clientUrl,
   });
 
-  // Plain-text alternative: generated from HTML or custom text
-  const text = bodyText || htmlToPlainText(bodyHtml) + (otpCode ? `\n\nYour Verification Code: ${otpCode}\n(Valid for 10 minutes)` : "") + (actionUrl ? `\n\nAction Link: ${actionUrl}` : "") + `\n\nPulseChat Technologies Inc.\nCo-Founded & Engineered by Ali Mehmood & Muhammad Moeez`;
-
-  // Attachments: clean CID attachment for the logo
-  const attachments = [];
-  if (hasLocalLogo) {
-    attachments.push({
-      filename: "pulsechat-logo.png",
-      path: emailLogoPath,
-      cid: "pulsechat-logo",
-    });
-  }
-
-  const messageId = `<pulsechat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}@pulsechat.io>`;
+  // Plain-text alternative matching RFC standards
+  const text =
+    bodyText ||
+    `${(headline || subject).toUpperCase()}\n\n` +
+      (greetingName ? `Hello ${greetingName},\n\n` : "") +
+      htmlToPlainText(bodyHtml) +
+      (otpCode ? `\n\nYour Verification Code: ${otpCode}\n(Valid for 10 minutes)` : "") +
+      (actionUrl ? `\n\nLink: ${actionUrl}` : "") +
+      `\n\n${footerNote || "If you did not request this email, you can safely ignore it."}\n\n` +
+      `PulseChat — Real-Time Messaging`;
 
   const mailOptions = {
-    from: `"PulseChat" <${senderEmail}>`,
-    sender: senderEmail,
+    from: `"${senderName}" <${senderEmail}>`,
     to,
-    replyTo: `"PulseChat Support" <${senderEmail}>`,
     subject,
     text,
     html,
-    messageId,
-    attachments,
-    headers: {
-      "X-Mailer": "PulseChat Transactional Engine",
-      "X-Entity-Ref-ID": messageId,
-      "Auto-Submitted": "auto-generated",
-      "X-Auto-Response-Suppress": "All",
-      "Precedence": "bulk",
-      "List-Unsubscribe": `<mailto:${senderEmail}?subject=Unsubscribe>`,
-      "X-Report-Abuse": `<mailto:${senderEmail}>`,
-    },
   };
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log(`[PulseChat Mailer] System Email dispatched from PulseChat to ${to} (MessageId: ${info.messageId})`);
+    console.log(`[PulseChat Mailer] Email delivered to ${to} (MessageId: ${info.messageId})`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error(`[PulseChat Mailer] Delivery failed for ${to}:`, error.message);
     throw error;
   }
 }
+
+/**
+ * Helper: Account Activation Email
+ */
+export async function sendAccountActivationEmail({ to, fullName, activationUrl }) {
+  return sendPulseEmail({
+    to,
+    subject: "Confirm your PulseChat account",
+    title: "PulseChat Account Confirmation",
+    preheader: `Welcome to PulseChat! Please confirm your email address.`,
+    headline: "Welcome to PulseChat!",
+    greetingName: fullName,
+    bodyHtml: `<p>Thank you for creating an account on PulseChat. Please click the button below to confirm your email and activate your account:</p>`,
+    actionUrl: activationUrl,
+    actionText: "Confirm Email Address",
+    footerNote: "This link expires in 4 hours. If you didn't create an account, you can ignore this email.",
+  });
+}
+
+/**
+ * Helper: Password Reset OTP Email
+ */
+export async function sendPasswordResetOtpEmail({ to, recipientName, otpCode }) {
+  return sendPulseEmail({
+    to,
+    subject: `PulseChat: ${otpCode} is your verification code`,
+    title: "PulseChat Password Reset",
+    preheader: `Your PulseChat verification code is ${otpCode}`,
+    headline: "Reset Your Password",
+    greetingName: recipientName || "there",
+    bodyHtml: `<p>We received a request to reset the password for your PulseChat account. Enter this verification code to proceed:</p>`,
+    otpCode,
+    footerNote: "This code is valid for 10 minutes. If you didn't request a password reset, you can safely ignore this email.",
+  });
+}
+
+/**
+ * Helper: Colleague Invitation Email
+ */
+export async function sendInvitationEmail({ to, inviterName, personalMessage, inviteUrl }) {
+  const noteHtml =
+    personalMessage && personalMessage.trim()
+      ? `<blockquote style="margin: 14px 0; padding: 10px 14px; background: #f8fafc; border-left: 3px solid #0284c7; border-radius: 6px; font-style: italic; color: #475569;">"${personalMessage.trim()}"</blockquote>`
+      : "";
+
+  return sendPulseEmail({
+    to,
+    subject: `${inviterName} invited you to join PulseChat`,
+    title: "PulseChat Invitation",
+    preheader: `${inviterName} invited you to connect on PulseChat`,
+    headline: `${inviterName} invited you to connect`,
+    greetingName: to.split("@")[0],
+    bodyHtml: `<p><strong>${inviterName}</strong> invited you to connect on PulseChat — real-time messaging with instant voice notes and media sharing.</p>${noteHtml}`,
+    actionUrl: inviteUrl,
+    actionText: "Join PulseChat",
+    footerNote: "You received this because your colleague invited you to PulseChat.",
+  });
+}
+
+export default {
+  sendPulseEmail,
+  sendAccountActivationEmail,
+  sendPasswordResetOtpEmail,
+  sendInvitationEmail,
+  buildPulseEmailHtml,
+};

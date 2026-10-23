@@ -22,19 +22,20 @@ const OTP = () => {
   }, [resendCooldown]);
 
   const changeHandler = (otp) => {
-    setUser({ otp });
+    setUser({ otp: otp ? otp.toUpperCase() : "" });
   };
 
   const otphandler = async (e) => {
     if (e) e.preventDefault();
-    if (!user.otp || user.otp.length < 5) {
-      warningtoast("Please enter all 5 digits of your verification code");
+    const cleanOtp = user.otp ? user.otp.trim().toUpperCase() : "";
+    if (!cleanOtp || cleanOtp.length < 5) {
+      warningtoast("Please enter all 5 characters of your verification code");
       return;
     }
 
     setLoading(true);
     try {
-      const { data } = await axios.post(`${apis.auth}/otp`, user);
+      const { data } = await axios.post(`${apis.auth}/otp`, { otp: cleanOtp });
       if (data.error) {
         errortoast(data.error);
       }
@@ -62,19 +63,19 @@ const OTP = () => {
         <div className="flex items-center justify-between pb-1.5 border-b border-white/10">
           <div className="flex items-center gap-2">
             <ShieldAlert className="w-4 h-4 text-[#38bdf8]" />
-            <span className="text-xs font-bold text-white tracking-wide">Anti-Tamper Token Validation</span>
+            <span className="text-xs font-bold text-white tracking-wide">Account Verification</span>
           </div>
           <span className="text-[10px] font-mono text-[#2dd4bf] bg-[#2dd4bf]/10 px-2 py-0.5 rounded-full border border-[#2dd4bf]/20">
-            ENCRYPTED
+            SECURE
           </span>
         </div>
         
         <p className="text-xs text-slate-200 leading-relaxed font-normal">
-          Every OTP is matched against your active session hash. Once confirmed, you will be granted immediate access to configure your new password.
+          Enter the 5-character verification code sent to your email. Once confirmed, you will be able to set a new password.
         </p>
 
         <div className="flex items-center gap-2 text-[11px] text-[#2dd4bf] pt-1">
-          <CheckCircle2 className="w-3.5 h-3.5" /> Direct SSL Handshake
+          <CheckCircle2 className="w-3.5 h-3.5" /> Instant Session Verification
         </div>
       </div>
     </div>
@@ -83,9 +84,9 @@ const OTP = () => {
   return (
     <AuthLayout
       heroTitle="Validate Your Authorized Session."
-      heroSubtitle="Confirm your identity with the 5-digit verification code sent to your email to safely regain access to your conversations."
+      heroSubtitle="Confirm your identity with the 5-character verification code sent to your email to safely regain access to your conversations."
       cardTitle="Enter Verification Code"
-      cardSubtitle="Type in the 5-digit security code dispatched to your registered email address."
+      cardSubtitle="Type in the 5-character security code dispatched to your registered email address."
       heroWidget={otpHeroWidget}
     >
       <form onSubmit={otphandler} className="space-y-4 sm:space-y-4.5">
@@ -107,12 +108,13 @@ const OTP = () => {
             onChange={changeHandler}
             numInputs={5}
             shouldAutoFocus
-            inputType="tel"
+            inputType="text"
             renderSeparator={<span className="w-2 sm:w-2.5" />}
             renderInput={(props) => (
               <input
                 {...props}
-                className="!w-11 h-13 sm:!w-13 sm:h-14 bg-slate-50 dark:bg-[#0f152d]/90 rounded-2xl border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xl sm:text-2xl font-black font-mono text-center focus:outline-none focus:ring-2 focus:ring-[#38bdf8]/30 focus:border-[#38bdf8] focus:bg-white dark:focus:bg-[#131b3b] transition-all duration-300 shadow-sm"
+                style={{ ...props.style, textTransform: "uppercase" }}
+                className="!w-11 h-13 sm:!w-13 sm:h-14 bg-slate-50 dark:bg-[#0f152d]/90 rounded-2xl border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xl sm:text-2xl font-black font-mono text-center uppercase focus:outline-none focus:ring-2 focus:ring-[#38bdf8]/30 focus:border-[#38bdf8] focus:bg-white dark:focus:bg-[#131b3b] transition-all duration-300 shadow-sm"
               />
             )}
             containerStyle="flex justify-center items-center"

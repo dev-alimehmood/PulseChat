@@ -1,7 +1,6 @@
 import GenerateTokenAndUser from "../utils/GenerateTokenAndUserResponse.js"
 import { catchErr, error, success, warning } from "../utils/messages.js"
 import { AWS_SES, CLIENT_URL, sender_email } from "../config/aws.js"
-import EmailTemplate from "../helpers/EmailTemplate.js"
 import { JWT_SECRET } from "../config/config.js"
 import user from "../models/user.models.js"
 import cuser from "../models/cuser.model.js"
@@ -10,11 +9,10 @@ import Schema from 'password-validator'
 import jwt from 'jsonwebtoken'
 import bcryptjs from 'bcryptjs'
 import { nanoid } from 'nanoid'
-import nodemailer from "nodemailer";
 import Conversation from "../models/conversation.js";
 import Message from "../models/message.js";
 import { io, onlineUsers } from "../server.js";
-import { sendPulseEmail } from "../helpers/mailer.js";
+import { sendPulseEmail, sendAccountActivationEmail, sendPasswordResetOtpEmail } from "../helpers/mailer.js";
 
 
 const pvalidator = new Schema
@@ -27,7 +25,6 @@ pvalidator
   .has().not().spaces()                           // Should not have spaces
   .is().not().oneOf(['Passw0rd', 'Password123']); // Blacklist these values
 
-// 1) sent verification link to emailadress /api/v1/pre-sign-up
 // 1) sent verification link to emailadress /api/v1/pre-sign-up
 const preSignup = async (req, res) => {
   try {
@@ -45,16 +42,12 @@ const preSignup = async (req, res) => {
 
     // Include refUserId in token if registered via invite
     const token = jwt.sign({ full_name, email, password, refUserId: refUserId || null }, JWT_SECRET, { expiresIn: "4h" })
-    
-    await sendPulseEmail({
+    const activationLink = `${CLIENT_URL}/${token}`;
+
+    await sendAccountActivationEmail({
       to: email,
-      subject: "[PulseChat] Activate Your Encrypted Account",
-      title: "PulseChat Account Activation",
-      headline: "Welcome to PulseChat!",
-      bodyHtml: `<p>Hello <strong>${full_name}</strong>,</p><p>Thank you for creating an account on PulseChat. Please click the button below to verify your email address and activate your encrypted workspace:</p>`,
-      actionUrl: `${CLIENT_URL}/${token}`,
-      actionText: "Activate My Account",
-      footerNote: "This activation link expires in 4 hours. If you did not sign up for PulseChat, you can safely ignore this email.",
+      fullName: full_name,
+      activationUrl: activationLink,
     });
 
     success("We have sent you a verification link, please check your email address", res)
@@ -155,69 +148,71 @@ const login = async (req, res) => {
   }
 }
 // 4) we will send you otp for password recovery /api/v1/pre-sign-up
+// 4) we will send you otp for password recovery /api/v1/pre-sign-up
 const forgetPassword = async (req, res) => {
   try {
     const email = req.body.email
-    const User = await user.findOne({ email })
     if (!email) {
-      error("please enter your email", res)
+      return error("Please enter your email address", res)
     }
     if (!evalidator.validate(email)) {
-      warning("This email is not valid", res)
+      return warning("This email address is not valid", res)
     }
+    const User = await user.findOne({ email })
     if (!User) {
-      error(`This email ${email} is not registered`, res)
+      return error(`This email ${email} is not registered`, res)
     }
-    const otp = nanoid(5).toUpperCase()
-    // ham jo otp save karan ga wo bcrypt kar ka karan ga 
-    // const salt = await bcryptjs.genSalt(12)
-    // const hashotp = await bcryptjs.hash(otp,salt)
-    User.otp = otp
-    await User.save()
+    // Generate clean 5-character uppercase alphanumeric code (no confusing symbols, no hyphens/underscores)
+    const OTP_CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+    let otp = "";
+    for (let i = 0; i < 5; i++) {
+      otp += OTP_CHARS.charAt(Math.floor(Math.random() * OTP_CHARS.length));
+    }
+    User.otp = otp;
+    await User.save();
 
-    await sendPulseEmail({
+    await sendPasswordResetOtpEmail({
       to: email,
-      subject: `[PulseChat] Password Reset Verification: ${otp}`,
-      title: "PulseChat Security Verification",
-      headline: "Password Reset Request",
-      bodyHtml: `<p>We received an authorized request to reset the password for your PulseChat account. Enter your single-use 5-digit verification passcode below:</p>`,
+      recipientName: User.full_name || "there",
       otpCode: otp,
-      footerNote: "If you did not request a password reset, your account credentials remain safe. Please do not share this security code with anyone.",
     });
 
-  success("OTP sent to your email", res);
-} catch (err) {
-  console.log(err.message);
-  error("Failed to send email", res);
-
+    return success("OTP sent to your email", res);
+  } catch (err) {
+    console.error("[PulseChat] forgetPassword error:", err.message);
+    return error("Failed to send email", res);
   }
-  
 }
 // 6) user ko otp send kar di ha
 const otp = async (req, res) => {
   try {
-    const otp = req.body.otp
-
-    // 1) otp wali field khali nahi honi chaiya
-    console.log(otp)
-    if (!otp) {
-      return error("Please Enter OTP", res)
+    const rawOtp = req.body.otp;
+    if (!rawOtp || !rawOtp.trim()) {
+      return error("Please Enter OTP", res);
     }
-    // 2) jo ham na otp likhi aur jo database ma ha wo same honi chaiya
-    const existotp = await user.findOne({ otp })
-    // const compareotp = await bcryptjs.compare(otp,emailexist.otp)
+    const cleanOtp = rawOtp.trim().toUpperCase();
+
+    // Verify OTP case-insensitively
+    const existotp = await user.findOne({
+      $or: [
+        { otp: cleanOtp },
+        { otp: rawOtp.trim() },
+        { otp: { $regex: new RegExp(`^${cleanOtp}$`, "i") } }
+      ]
+    });
+
     if (!existotp) {
-      return warning("Wrong OTP", res)
+      return warning("Wrong OTP", res);
     }
-    const token = nanoid(32)
-    existotp.resetToken = token
-    success({ message: "Reset Your Password", token: existotp.resetToken }, res)
+    const token = nanoid(32);
+    existotp.resetToken = token;
     existotp.otp = "";
-    await existotp.save()
+    await existotp.save();
 
+    return success({ message: "Reset Your Password", token: existotp.resetToken }, res);
   }
   catch (err) {
-    catchErr(err, res)
+    catchErr(err, res);
   }
 }
 // 5) with that otp you can reset your password /api/v1/pre-sign-up

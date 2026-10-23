@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { CLIENT_URL } from "../config/aws.js";
-import { sendPulseEmail } from "../helpers/mailer.js";
+import { sendPulseEmail, sendAccountActivationEmail } from "../helpers/mailer.js";
 
 // ✅ Get All Users (except logged-in user)
 export const getUsers = async (req, res) => {
@@ -47,14 +47,10 @@ export const register = async (req, res) => {
     });
     const verificationUrl = `${CLIENT_URL}/verify/${verificationToken}`;
 
-    await sendPulseEmail({
+    await sendAccountActivationEmail({
       to: email,
-      subject: "[PulseChat] Verify Your Email Address",
-      headline: "Welcome to PulseChat!",
-      bodyHtml: `<p>Hello <strong>${name}</strong>,</p><p>Thank you for joining PulseChat. Please click the button below to verify your email address and activate your account:</p>`,
-      actionUrl: verificationUrl,
-      actionText: "Verify & Activate Account",
-      footerNote: "If you did not create a PulseChat account, you can safely ignore this message.",
+      fullName: name,
+      activationUrl: verificationUrl,
     });
 
     res.status(201).json(user);
