@@ -19,5 +19,5 @@ export const AWS_SES = new SES(awsConfig)
 export const AWSS3 = new S3(awsConfig)
 
 
-export const sender_email = "PulseChat <alimehmood.dev@gmail.com>"
+export const sender_email = `"${process.env.EMAIL_FROM_NAME || "PulseChat"}" <${process.env.EMAIL_USER || "alimehmood.dev@gmail.com"}>`
 export const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:81"
