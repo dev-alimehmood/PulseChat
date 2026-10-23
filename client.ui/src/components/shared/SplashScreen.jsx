@@ -1,88 +1,79 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
 const SplashScreen = ({ onComplete }) => {
   const [phase, setPhase] = useState("loading");
 
   useEffect(() => {
-    // 1.5 seconds of complex pattern, then 0.5s of blast/exit
-    const timer = setTimeout(() => {
-      setPhase("exit");
-      setTimeout(() => {
-        onComplete();
-      }, 800);
-    }, 1800);
+    const timer = setTimeout(() => setPhase("complete"), 1700);
     return () => clearTimeout(timer);
-  }, [onComplete]);
+  }, []);
 
   return (
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={onComplete}>
       {phase !== "complete" && (
-        <motion.div
+        <Motion.div
           key="splash"
           initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0, filter: "blur(20px)", scale: 1.2 }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-50 dark:bg-slate-950"
+          exit={{ opacity: 0, scale: 1.03 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="fixed inset-0 z-[9999] flex min-h-[100dvh] items-center justify-center overflow-hidden bg-[#070b18] px-6 text-white"
+          role="status"
+          aria-label="Loading PulseChat"
         >
-          {phase === "loading" && (
-            <div className="relative flex items-center justify-center">
-              {/* Spinning geometric rings */}
-              {[...Array(3)].map((_, i) => (
-                <motion.div
-                  key={`ring-${i}`}
-                  initial={{ scale: 0, rotate: 0, borderRadius: "20%" }}
-                  animate={{
-                    scale: [0, 1.5, 1],
-                    rotate: [0, 180, 360],
-                    borderRadius: ["20%", "50%", "30%"],
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    delay: i * 0.2,
-                    ease: "easeInOut",
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                  }}
-                  className="absolute w-24 h-24 border-4 border-primary-500/50 mix-blend-multiply dark:mix-blend-screen shadow-[0_0_30px_rgba(var(--primary-500),0.3)]"
-                  style={{ transformOrigin: "center center" }}
-                />
-              ))}
+          <Motion.div
+            aria-hidden="true"
+            animate={{ scale: [0.9, 1.15, 0.9], opacity: [0.2, 0.42, 0.2] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute h-72 w-72 rounded-full bg-cyan-400/30 blur-[100px]"
+          />
 
-              {/* Pulsing Core */}
-              <motion.div
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: [0, 1.2, 0.8], opacity: [0, 1, 0.8] }}
-                transition={{
-                  duration: 1,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                }}
-                className="absolute w-12 h-12 bg-primary-600 rounded-full shadow-[0_0_40px_rgba(var(--primary-600),1)]"
+          <div className="relative flex w-full max-w-xs flex-col items-center">
+            <Motion.div
+              initial={{ opacity: 0, y: 12, scale: 0.92 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.45, ease: "easeOut" }}
+              className="relative mb-7 flex h-28 w-28 items-center justify-center rounded-[2rem] border border-white/15 bg-white/[0.07] shadow-[0_20px_70px_rgba(56,189,248,0.18)] backdrop-blur-xl"
+            >
+              <Motion.img
+                src="/logo.png"
+                alt="PulseChat"
+                animate={{ scale: [1, 1.045, 1] }}
+                transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+                className="h-20 w-20 object-contain drop-shadow-[0_0_18px_rgba(56,189,248,0.45)]"
               />
+              <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full bg-emerald-400 ring-4 ring-[#070b18] shadow-[0_0_14px_rgba(52,211,153,0.8)]" />
+            </Motion.div>
 
-              {/* Text */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-                className="absolute mt-48 text-primary-600 dark:text-primary-400 font-bold tracking-[0.3em] uppercase text-sm"
-              >
-                Initializing
-              </motion.div>
+            <Motion.h1
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.12, duration: 0.4 }}
+              className="text-2xl font-bold tracking-tight"
+            >
+              PulseChat
+            </Motion.h1>
+            <p className="mt-2 text-center text-sm text-slate-400">
+              Your conversations, in sync.
+            </p>
+
+            <div
+              className="mt-10 h-1 w-44 overflow-hidden rounded-full bg-white/10"
+              aria-hidden="true"
+            >
+              <Motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 1.7, ease: "easeInOut" }}
+                className="h-full origin-left rounded-full bg-gradient-to-r from-indigo-400 via-sky-400 to-teal-300 shadow-[0_0_14px_rgba(56,189,248,0.7)]"
+              />
             </div>
-          )}
-
-          {phase === "exit" && (
-            <motion.div
-              initial={{ scale: 1, opacity: 1 }}
-              animate={{ scale: [1, 20], opacity: [1, 0] }}
-              transition={{ duration: 0.8, ease: "easeIn" }}
-              className="absolute w-32 h-32 bg-primary-500 rounded-full blur-xl"
-            />
-          )}
-        </motion.div>
+            <p className="mt-3 text-[11px] font-medium tracking-[0.18em] text-slate-500">
+              GETTING THINGS READY
+            </p>
+          </div>
+        </Motion.div>
       )}
     </AnimatePresence>
   );

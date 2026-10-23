@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import { Download, X, Share, PlusSquare, Sparkles, CheckCircle2 } from "lucide-react";
 import usePWAInstall from "../../hooks/usePWAInstall";
-
-const DISMISS_KEY = "pulse_pwa_dismissed_until";
-const DISMISS_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export const MobileInstallPrompt = () => {
   const { isInstallable, isInstalled, isIOS, installApp } = usePWAInstall();
@@ -13,10 +10,7 @@ export const MobileInstallPrompt = () => {
 
   useEffect(() => {
     // If already running in standalone mode (already installed), never show
-    if (isInstalled) {
-      setIsVisible(false);
-      return;
-    }
+    if (isInstalled) return;
 
     // Check if on a mobile device or screen
     const checkIsMobile = () => {
@@ -26,17 +20,7 @@ export const MobileInstallPrompt = () => {
       return isMobileWidth || isTouchUserAgent;
     };
 
-    if (!checkIsMobile()) {
-      setIsVisible(false);
-      return;
-    }
-
-    // Check if dismissed recently (within last 24h)
-    const dismissedUntil = localStorage.getItem(DISMISS_KEY);
-    if (dismissedUntil && Number(dismissedUntil) > Date.now()) {
-      setIsVisible(false);
-      return;
-    }
+    if (!checkIsMobile()) return;
 
     // Smooth delay before showing banner so page finishes rendering
     const timer = setTimeout(() => {
@@ -48,11 +32,6 @@ export const MobileInstallPrompt = () => {
 
   const handleDismiss = () => {
     setIsVisible(false);
-    try {
-      localStorage.setItem(DISMISS_KEY, String(Date.now() + DISMISS_DURATION_MS));
-    } catch (e) {
-      console.warn("Storage error:", e);
-    }
   };
 
   const handleInstallClick = async () => {
@@ -77,7 +56,7 @@ export const MobileInstallPrompt = () => {
 
   return (
     <AnimatePresence>
-      <motion.aside
+      <Motion.aside
         aria-label="Install PulseChat App"
         initial={{ opacity: 0, y: 40, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -143,7 +122,7 @@ export const MobileInstallPrompt = () => {
 
           {/* Optional iOS Instructions Drawer */}
           {showIOSGuide && (
-            <motion.div
+            <Motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
@@ -163,7 +142,7 @@ export const MobileInstallPrompt = () => {
                   <PlusSquare className="w-3 h-3 inline text-emerald-400" />.
                 </li>
               </ol>
-            </motion.div>
+            </Motion.div>
           )}
 
           {/* Action Buttons Row */}
@@ -184,7 +163,7 @@ export const MobileInstallPrompt = () => {
             </button>
           </div>
         </div>
-      </motion.aside>
+      </Motion.aside>
     </AnimatePresence>
   );
 };

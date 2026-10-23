@@ -22,8 +22,6 @@ export const SocketProvider = ({ children }) => {
       import.meta.env.VITE_SOCKET_URL || "http://localhost:5000",
       {
         auth: { token: Auth.token },
-        transports: ["websocket"],
-        reconnectionAttempts: 5,
         reconnectionDelay: 2000,
       }
     );
@@ -38,7 +36,6 @@ export const SocketProvider = ({ children }) => {
 
     s.on("disconnect", (reason) => {
       console.warn("Socket disconnected:", reason);
-      setSocket(null);
     });
 
     s.on("connect_error", (err) => {
