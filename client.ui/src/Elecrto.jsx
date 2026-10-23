@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import "./Css/Style.css"
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import AppLayout from "./layouts/AppLayout"
@@ -63,7 +63,11 @@ const GuestOnlyRoute = ({ children }) => {
 
 const Elecrto = () => {
   const [Auth] = useAuth()
-  const [initialLoading, setInitialLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(() => {
+    if (typeof window === "undefined") return false
+    return (typeof window.matchMedia === "function" && window.matchMedia("(max-width: 820px)").matches) ||
+      /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "")
+  })
   
   // Setup Web Push Subscriptions
   useWebPush()
@@ -92,10 +96,12 @@ const Elecrto = () => {
   }, [dark])
 
   const toggleDark = () => setDark((prev) => !prev)
+  const completeStartup = useCallback(() => setInitialLoading(false), [])
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#090d1b] text-slate-900 dark:text-white transition-colors duration-500 font-['Inter','Segoe_UI',sans-serif]">
       <div className="opacity-100 min-h-screen flex flex-col">
+        {initialLoading && <SplashScreen onComplete={completeStartup} />}
         <Router>
           <ScrollToTop />
           <BackToTop />
